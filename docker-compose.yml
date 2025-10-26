@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  auth_platform:
+    build:
+      context: ./auth_platform
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./app.db
+
+  dev_portal_ui:
+    build:
+      context: ./dev-portal-ui
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000

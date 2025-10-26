@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# SQLite DB
+*.sqlite3
+*.db
+
+# Environment variables
+.env
+.env.*
+
+# Pytest
+.pytest_cache/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# macOS
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+**/docker-compose.override.yml
+
+# Node (for dev-portal-ui)
+node_modules/
+dev-portal-ui/dev-portal-ui/node_modules/
+
+# Logs
+*.log
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+
+# Ignore IDE session/history
+.bash_sessions/
