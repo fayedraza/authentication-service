@@ -1,3 +1,75 @@
+# Authenication Service
+
+This repository contains a small authentication service (FastAPI backend) and a React-based developer portal UI.
+
+Layout
+- `auth_platform/` — Python backend (Poetry-managed). Contains the FastAPI service, tests, and pyproject.
+- `dev-portal-ui/dev-portal-ui/` — React frontend (npm). Contains UI source, tests, and package.json.
+
+Getting started (local)
+
+1. Backend (Poetry)
+
+```bash
+cd "auth_platform"
+poetry install
+poetry run uvicorn auth_platform.auth_service.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Run backend tests:
+
+```bash
+cd auth_platform
+poetry run pytest -q
+```
+
+2. Frontend (UI)
+
+```bash
+cd dev-portal-ui/dev-portal-ui
+npm ci
+npm start
+```
+
+Run UI tests:
+
+```bash
+cd dev-portal-ui/dev-portal-ui
+npm test -- --watchAll=false
+```
+
+Pre-commit and secret scanning
+
+- Install dev tooling (locally):
+
+```bash
+python -m pip install --user pre-commit detect-secrets
+~/.local/bin/pre-commit install
+```
+
+- To create or update the detect-secrets baseline (review before committing):
+
+```bash
+~/.local/bin/detect-secrets scan --all-files > .secrets.baseline
+# review .secrets.baseline before committing
+git add .secrets.baseline && git commit -m "chore: update detect-secrets baseline"
+```
+
+Linting
+
+- Pylint is configured in `.pre-commit-config.yaml` and will run on Python files via pre-commit. You can also run it manually:
+
+```bash
+poetry run pylint auth_platform/auth_platform
+```
+
+CI
+
+- GitHub Actions workflow `.github/workflows/ci.yml` runs detect-secrets, backend tests (Poetry), and UI unit tests (npm).
+
+Security note
+
+- Never commit `.env` files, SSH keys, or other secrets. If you find credentials accidentally committed, follow the steps in the repo's CONTRIBUTING/SECURITY notes to remove them from history and rotate keys.
 # Authentication Service Repository
 
 This repository contains two services composed together for local development:

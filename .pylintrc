@@ -1,0 +1,10 @@
+[MASTER]
+# Load configuration for project
+init-hook=''
+
+[FORMAT]
+max-line-length=100
+
+[MESSAGES CONTROL]
+# disable missing docstring warnings for small/demo project
+disable=C0114,C0115,C0116
