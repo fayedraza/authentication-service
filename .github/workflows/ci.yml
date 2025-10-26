@@ -30,7 +30,11 @@ jobs:
           detect-secrets scan auth_platform dev-portal-ui/dev-portal-ui > new.baseline || true
           if [ -f .secrets.baseline ]; then
             echo "Comparing new scan to committed baseline (scoped)..."
-            git --no-pager diff --no-index --exit-code .secrets.baseline new.baseline
+            # Strip the generated_at timestamp from both files before comparing so
+            # timestamp-only differences won't fail the job.
+            sed '/"generated_at"/d' .secrets.baseline > .secrets.baseline.filtered || true
+            sed '/"generated_at"/d' new.baseline > new.baseline.filtered || true
+            git --no-pager diff --no-index --exit-code .secrets.baseline.filtered new.baseline.filtered
           else
             echo "No .secrets.baseline found in repo; failing to avoid accidental leaks"
             cat new.baseline || true
