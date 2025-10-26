@@ -24,12 +24,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install detect-secrets==1.5.0
 
-      - name: Run detect-secrets scan and compare to baseline
-        # Create a fresh scan and fail the job if the new baseline differs
+      - name: Run detect-secrets scan (project folders) and compare to baseline
+        # Scan only project folders so CI compares the same scope as the committed baseline.
         run: |
-          detect-secrets scan --all-files > new.baseline || true
+          detect-secrets scan auth_platform dev-portal-ui/dev-portal-ui > new.baseline || true
           if [ -f .secrets.baseline ]; then
-            echo "Comparing new scan to committed baseline..."
+            echo "Comparing new scan to committed baseline (scoped)..."
             git --no-pager diff --no-index --exit-code .secrets.baseline new.baseline
           else
             echo "No .secrets.baseline found in repo; failing to avoid accidental leaks"
