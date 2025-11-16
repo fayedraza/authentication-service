@@ -27,7 +27,7 @@ jobs:
       - name: Run detect-secrets scan (project folders) and compare to baseline
         # Scan only project folders so CI compares the same scope as the committed baseline.
         run: |
-          detect-secrets scan auth_platform dev-portal-ui/dev-portal-ui > new.baseline || true
+          detect-secrets scan --exclude-files '\.secrets\.baseline$' --exclude-files 'detect_findings\.baseline$' auth_platform dev-portal-ui/dev-portal-ui > new.baseline || true
           if [ -f .secrets.baseline ]; then
             echo "Comparing new scan to committed baseline (scoped)..."
             # Strip the generated_at timestamp from both files before comparing so
