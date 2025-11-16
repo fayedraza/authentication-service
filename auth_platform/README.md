@@ -95,4 +95,3 @@ Where to find things
 Contact / Support
 -----------------
 Open an issue or create a pull request in the repo if something in the backend needs changes or additional documentation.
-

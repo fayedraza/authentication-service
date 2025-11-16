@@ -1,10 +1,17 @@
 [MASTER]
 # Load configuration for project
 init-hook=''
+# Add files or directories matching the regex patterns to the ignore list for line length
+ignore-patterns=test_.*\.py
 
 [FORMAT]
-max-line-length=100
+max-line-length=120
 
 [MESSAGES CONTROL]
 # disable missing docstring warnings for small/demo project
-disable=C0114,C0115,C0116
+# also disable import and style warnings for pre-commit
+disable=C0114,C0115,C0116,E0401,C0411,C0412,R0903,R0801,C0103,W0621,W0611,C0415,C0413,F0002,C0301
+
+[DESIGN]
+# Minimum number of public methods for a class
+min-public-methods=0

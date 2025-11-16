@@ -38,6 +38,24 @@ cd dev-portal-ui/dev-portal-ui
 npm test -- --watchAll=false
 ```
 
+## Two-Factor Authentication (TOTP)
+
+Backend
+- Endpoints:
+	- POST `/login`: If the user has 2FA enabled, returns `{ "requires2fa": true }` (no token yet). Otherwise returns `{ "access_token": "..." }`.
+	- POST `/2fa/enroll`: Enrolls the authenticated user for 2FA (in dev tier, protected via username/password in request). Returns an `otpauth://` URI for QR.
+	- POST `/2fa/verify`: Validates a 6-digit TOTP code and returns `{ "access_token": "..." }`.
+- Configuration:
+	- `AUTH_SERVICE_ISSUER` (env): Issuer shown in the authenticator app (default `AuthService`).
+
+Frontend
+- Account page (`/account`): Click “Enable 2FA”, which calls `/2fa/enroll` and renders the returned `otpauth://` as a QR (via `qrcode.react`).
+- Login flow: If `/login` responds with `requires2fa`, the UI prompts for the 6-digit code and submits it to `/2fa/verify` to complete login.
+
+Security notes
+- Do not expose raw TOTP secrets to the client; only return the `otpauth://` URI.
+- Avoid logging TOTP secrets or codes. Use environment variables for issuer and other auth-related config and never commit `.env` files.
+
 Pre-commit and secret scanning
 
 - Install dev tooling (locally):

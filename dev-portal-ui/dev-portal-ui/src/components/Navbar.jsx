@@ -10,6 +10,7 @@ export default function Navbar() {
   return (
     <nav>
       <Link to="/tickets">Tickets</Link>{" | "}
+      <Link to="/account">Account</Link>{" | "}
       {auth.tier === 'Pro' && (
         <>
           <Link to="/dashboard">Dashboard</Link>{" | "}
