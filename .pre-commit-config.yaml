@@ -11,8 +11,8 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        args: ["--baseline", "detect_findings.baseline"]
-        exclude: '(\.secrets\.baseline|detect_findings\.baseline)$'
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: '\.secrets\.baseline'
 
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.3.1
