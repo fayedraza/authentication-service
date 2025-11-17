@@ -33,6 +33,7 @@ dist/
 .idea/
 *.sublime-workspace
 *.sublime-project
+.kiro/
 
 # macOS
 .DS_Store

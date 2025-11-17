@@ -14,7 +14,7 @@ def reset_db():
     Base.metadata.create_all(bind=engine)
 
 
-def ensure_user(email="alice@example.com", username="alice", password="Secret123!", tier="dev"):
+def ensure_user(email="user@example.com", username="user", password="Secret123!", tier="dev"):
     db = SessionLocal()
     try:
         u = db.query(User).filter(User.username == username).first()

@@ -25,8 +25,8 @@ def test_register_and_login(client):
     # Use a unique username and email for each test run to avoid conflicts
     import uuid
     unique = uuid.uuid4().hex[:8]
-    username = f"bob_{unique}"
-    email = f"bob_{unique}@example.com"
+    username = f"user_{unique}"
+    email = f"user_{unique}@example.com"
     password = "testing12345"
     register_data = {
         "username": username,
@@ -58,8 +58,8 @@ def test_register_missing_fields(client):
 def test_login_invalid_password(client):
     import uuid
     unique = uuid.uuid4().hex[:8]
-    username = f"alice_{unique}"
-    email = f"alice_{unique}@example.com"
+    username = f"testuser_{unique}"
+    email = f"testuser_{unique}@example.com"
     password = "goodpassword"
     register_data = {
         "username": username,

@@ -120,6 +120,12 @@
     },
     {
       "path": "detect_secrets.filters.heuristic.is_templated_secret"
+    },
+    {
+      "path": "detect_secrets.filters.regex.should_exclude_file",
+      "pattern": [
+        "\\.git/|node_modules/|\\.venv/"
+      ]
     }
   ],
   "results": {
@@ -129,56 +135,79 @@
         "filename": ".secrets.baseline",
         "hashed_secret": "f46a885f6d43cf82800a22ccb17573cfb223b7ce",
         "is_verified": false,
-        "line_number": 130
+        "line_number": 137
       },
       {
         "type": "Secret Keyword",
         "filename": ".secrets.baseline",
         "hashed_secret": "f46a885f6d43cf82800a22ccb17573cfb223b7ce",
         "is_verified": false,
-        "line_number": 130
+        "line_number": 137
       },
       {
         "type": "Hex High Entropy String",
         "filename": ".secrets.baseline",
-        "hashed_secret": "08d5d9a01a4f36005ab0f8b05248b6d6847fadc1",
-        "is_verified": false,
-        "line_number": 139
-      },
-      {
-        "type": "Secret Keyword",
-        "filename": ".secrets.baseline",
-        "hashed_secret": "08d5d9a01a4f36005ab0f8b05248b6d6847fadc1",
-        "is_verified": false,
-        "line_number": 139
-      },
-      {
-        "type": "Hex High Entropy String",
-        "filename": ".secrets.baseline",
-        "hashed_secret": "300ac668c782c666a9de0f2ccb59cea082255b5d",
+        "hashed_secret": "3298881ab46094450f122bf721a753899df6e5c9",
         "is_verified": false,
         "line_number": 146
       },
       {
         "type": "Secret Keyword",
         "filename": ".secrets.baseline",
-        "hashed_secret": "300ac668c782c666a9de0f2ccb59cea082255b5d",
+        "hashed_secret": "3298881ab46094450f122bf721a753899df6e5c9",
         "is_verified": false,
         "line_number": 146
       },
       {
         "type": "Hex High Entropy String",
         "filename": ".secrets.baseline",
+        "hashed_secret": "08d5d9a01a4f36005ab0f8b05248b6d6847fadc1",
+        "is_verified": false,
+        "line_number": 155
+      },
+      {
+        "type": "Secret Keyword",
+        "filename": ".secrets.baseline",
+        "hashed_secret": "08d5d9a01a4f36005ab0f8b05248b6d6847fadc1",
+        "is_verified": false,
+        "line_number": 155
+      },
+      {
+        "type": "Hex High Entropy String",
+        "filename": ".secrets.baseline",
+        "hashed_secret": "300ac668c782c666a9de0f2ccb59cea082255b5d",
+        "is_verified": false,
+        "line_number": 162
+      },
+      {
+        "type": "Secret Keyword",
+        "filename": ".secrets.baseline",
+        "hashed_secret": "300ac668c782c666a9de0f2ccb59cea082255b5d",
+        "is_verified": false,
+        "line_number": 162
+      },
+      {
+        "type": "Hex High Entropy String",
+        "filename": ".secrets.baseline",
         "hashed_secret": "255edd2793e5286d4441ea6bfba734b59e915864",
         "is_verified": false,
-        "line_number": 153
+        "line_number": 169
       },
       {
         "type": "Secret Keyword",
         "filename": ".secrets.baseline",
         "hashed_secret": "255edd2793e5286d4441ea6bfba734b59e915864",
         "is_verified": false,
-        "line_number": 153
+        "line_number": 169
+      }
+    ],
+    "auth_platform/TESTING_2FA.md": [
+      {
+        "type": "Secret Keyword",
+        "filename": "auth_platform/TESTING_2FA.md",
+        "hashed_secret": "72559b51f94a7a3ad058c5740cbe2f7cb0d4080b",
+        "is_verified": false,
+        "line_number": 122
       }
     ],
     "auth_platform/auth_platform/auth_service/auth.py": [
@@ -187,7 +216,7 @@
         "filename": "auth_platform/auth_platform/auth_service/auth.py",
         "hashed_secret": "c3d3a05a92ff2b63e27aa3e0cd0bc32ff36be9c6",
         "is_verified": false,
-        "line_number": 5
+        "line_number": 6
       }
     ],
     "auth_platform/auth_platform_tests/test_2fa.py": [
@@ -241,5 +270,5 @@
       }
     ]
   },
-  "generated_at": "2025-11-16T21:06:24Z"
+  "generated_at": "2025-11-17T00:11:38Z"
 }

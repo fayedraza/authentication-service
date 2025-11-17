@@ -19,9 +19,17 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class RegistrationResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    otpauth_uri: str
+    requires_2fa_setup: bool = True
+
+
 class LoginStep1Response(BaseModel):
     requires2fa: bool
     message: Optional[str] = None
+    username: Optional[str] = None
 
 
 class TOTPVerifyRequest(BaseModel):
@@ -36,6 +44,15 @@ class EnrollRequest(BaseModel):
 
 class EnrollResponse(BaseModel):
     otpauth_uri: str
+
+
+class TOTPDisableRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TOTPStatusResponse(BaseModel):
+    is_2fa_enabled: bool
 
 
 # Password reset

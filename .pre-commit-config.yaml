@@ -14,11 +14,9 @@ repos:
         args: ["--baseline", "detect_findings.baseline"]
         exclude: '(\.secrets\.baseline|detect_findings\.baseline)$'
 
-  - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v3.0.0a5
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.3.1
     hooks:
       - id: pylint
         name: pylint
-        entry: pylint
-        language: python
-        types: [python]
+        args: [--disable=cyclic-import]

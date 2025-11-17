@@ -39,3 +39,11 @@ class Ticket(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     owner = relationship("User", back_populates="tickets")
+
+
+class TOTPAttempt(Base):
+    __tablename__ = "totp_attempts"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    attempted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    success = Column(Boolean, nullable=False)

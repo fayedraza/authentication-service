@@ -6,18 +6,21 @@ from .schemas import (
     UserCreate,
     UserLogin,
     Token,
+    RegistrationResponse,
     LoginStep1Response,
     EnrollRequest,
     EnrollResponse,
     TOTPVerifyRequest,
+    TOTPDisableRequest,
+    TOTPStatusResponse,
     PasswordResetRequest,
     PasswordResetConfirm,
     TicketCreate,
     TicketResponse,
 )
-from .auth import hash_password, verify_password, create_access_token
+from .auth import hash_password, verify_password, create_access_token, check_rate_limit, record_totp_attempt
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union
+from typing import Union, Optional
 import os
 import pyotp
 from datetime import datetime, timedelta
@@ -39,7 +42,7 @@ app.add_middleware(
 def startup():
     init_db()
 
-@app.post("/register", response_model=Token)
+@app.post("/register", response_model=RegistrationResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     # Check if email or username already exists
     if db.query(User).filter(User.email == user.email).first():
@@ -51,20 +54,59 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Tier must be 'dev' or 'pro'")
 
     hashed_pw = hash_password(user.password)
-    new_user = User(
-        username=user.username,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        email=user.email,
-        password=hashed_pw,
-        tier=user.tier
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
 
-    token = create_access_token(new_user.username)
-    return {"access_token": token, "token_type": "bearer"}
+    # Generate TOTP secret for automatic 2FA enrollment
+    try:
+        totp_secret = pyotp.random_base32()
+
+        # Validate secret length (must be at least 16 characters)
+        if len(totp_secret) < 16:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate secure TOTP secret"
+            )
+
+        new_user = User(
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            password=hashed_pw,
+            tier=user.tier,
+            is_2fa_enabled=True,
+            totp_secret=totp_secret
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+
+        # Log enrollment event
+        print(f"[2FA] Auto-enrollment during registration: user_id={new_user.id}, username={new_user.username}, timestamp={datetime.utcnow().isoformat()}")
+
+        # Generate otpauth URI for QR code
+        issuer = os.getenv("AUTH_SERVICE_ISSUER", "AuthService")
+        totp = pyotp.TOTP(new_user.totp_secret)
+        otpauth_uri = totp.provisioning_uri(name=new_user.username, issuer_name=issuer)
+
+        # Log URI for dev tier testing
+        print(f"[2FA] otpauth URI for {new_user.username}: {otpauth_uri}")
+
+        token = create_access_token(new_user.username)
+        return RegistrationResponse(
+            access_token=token,
+            token_type="bearer",
+            otpauth_uri=otpauth_uri,
+            requires_2fa_setup=True
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[2FA] Registration error for user {user.username}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to register user"
+        ) from e
 
 @app.post("/login", response_model=Union[Token, LoginStep1Response])
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
@@ -74,8 +116,16 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
     # If 2FA is enabled, require TOTP verification in a second step
     if user.is_2fa_enabled:
-        return LoginStep1Response(requires2fa=True, message="TOTP required")
+        # Log 2FA required event
+        print(f"[2FA] Login requires 2FA: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
+        return LoginStep1Response(
+            requires2fa=True,
+            message="Please enter the 6-digit code from your authenticator app",
+            username=user.username
+        )
 
+    # Log successful login without 2FA
+    print(f"[Login] Successful login: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
     token = create_access_token(user.username)
     return {"access_token": token, "token_type": "bearer"}
 
@@ -83,40 +133,124 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 @app.post("/2fa/enroll", response_model=EnrollResponse)
 def enroll_2fa(payload: EnrollRequest, db: Session = Depends(get_db)):
     """
-    Simple protection for dev tier: require user/password to enroll.
-    In production, you would typically protect this with an authenticated session/JWT.
+    Enroll user in TOTP 2FA or re-enroll with a new secret.
+    Requires user/password authentication.
     """
     user = db.query(User).filter(User.username == payload.username).first()
     if not user or not verify_password(payload.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    # Generate or reuse a TOTP secret and mark 2FA enabled
-    if not user.totp_secret:
-        user.totp_secret = pyotp.random_base32()
-    user.is_2fa_enabled = True
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    # Check if this is a re-enrollment
+    is_reenrollment = user.totp_secret is not None and user.is_2fa_enabled
 
-    issuer = os.getenv("AUTH_SERVICE_ISSUER", "AuthService")
-    totp = pyotp.TOTP(user.totp_secret)
-    otpauth_uri = totp.provisioning_uri(name=user.username, issuer_name=issuer)
-    return EnrollResponse(otpauth_uri=otpauth_uri)
+    # Generate new TOTP secret (always generate new for re-enrollment)
+    try:
+        new_secret = pyotp.random_base32()
+
+        # Validate secret length (must be at least 16 characters)
+        if len(new_secret) < 16:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate secure TOTP secret"
+            )
+
+        # Update user with new secret and enable 2FA
+        user.totp_secret = new_secret
+        user.is_2fa_enabled = True
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        # Log enrollment event
+        if is_reenrollment:
+            print(f"[2FA] Re-enrollment: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
+        else:
+            print(f"[2FA] New enrollment: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
+
+        # Generate otpauth URI
+        issuer = os.getenv("AUTH_SERVICE_ISSUER", "AuthService")
+        totp = pyotp.TOTP(user.totp_secret)
+        otpauth_uri = totp.provisioning_uri(name=user.username, issuer_name=issuer)
+
+        # Log URI for dev tier testing
+        print(f"[2FA] otpauth URI for {user.username}: {otpauth_uri}")
+
+        return EnrollResponse(otpauth_uri=otpauth_uri)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[2FA] Enrollment error for user {payload.username}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to enroll in 2FA"
+        ) from e
 
 
 @app.post("/2fa/verify", response_model=Token)
 def verify_totp(payload: TOTPVerifyRequest, db: Session = Depends(get_db)):
+    from .auth import check_rate_limit, record_totp_attempt
+
+    # Validate user exists and has 2FA enabled
     user = db.query(User).filter(User.username == payload.username).first()
-    if not user or not user.is_2fa_enabled or not user.totp_secret:
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    if not user.is_2fa_enabled or not user.totp_secret:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="2FA not enabled for user")
 
+    # Validate code format (must be 6 digits)
+    if not payload.code or len(payload.code) != 6 or not payload.code.isdigit():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="TOTP code must be 6 digits")
+
+    # Check rate limit before attempting verification
+    is_rate_limited, minutes_until_reset = check_rate_limit(user.id, db)
+    if is_rate_limited:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many failed attempts. Try again in {minutes_until_reset} minute{'s' if minutes_until_reset != 1 else ''}"
+        )
+
+    # Verify TOTP code with 30-second tolerance window (valid_window=1)
     totp = pyotp.TOTP(user.totp_secret)
     is_valid = totp.verify(payload.code, valid_window=1)
+
+    # Record the attempt
+    record_totp_attempt(user.id, is_valid, db)
+
     if not is_valid:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code")
 
+    # Log successful login with 2FA
+    print(f"[Login] Successful login with 2FA: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
+
+    # Generate and return JWT token
     token = create_access_token(user.username)
     return {"access_token": token, "token_type": "bearer"}
+
+
+@app.post("/2fa/disable")
+def disable_2fa(payload: TOTPDisableRequest, db: Session = Depends(get_db)):
+    """
+    Disable TOTP 2FA for a user.
+    Requires user/password authentication.
+    Clears the TOTP secret and sets is_2fa_enabled to False.
+    """
+    # Verify user credentials
+    user = db.query(User).filter(User.username == payload.username).first()
+    if not user or not verify_password(payload.password, user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Disable 2FA by clearing secret and flag
+    user.is_2fa_enabled = False
+    user.totp_secret = None
+    db.add(user)
+    db.commit()
+
+    # Log the disable event
+    print(f"[2FA] Disabled: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
+
+    return {"message": "2FA has been disabled successfully"}
 
 
 # ---------------- Password Reset Flow (Dev Tier) ----------------
@@ -171,7 +305,7 @@ def password_reset_confirm(payload: PasswordResetConfirm, db: Session = Depends(
 
 def get_current_user(
     db: Session = Depends(get_db),
-    authorization: str | None = Header(default=None, alias="Authorization"),
+    authorization: Optional[str] = Header(default=None, alias="Authorization"),
 ):
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
@@ -182,8 +316,8 @@ def get_current_user(
 
         data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = data.get("sub")
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
     user = db.query(User).filter(User.username == username).first()
     if not user:
@@ -204,3 +338,13 @@ def create_ticket(payload: TicketCreate, user: User = Depends(get_current_user),
 def list_tickets(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     tickets = db.query(Ticket).filter(Ticket.owner_id == user.id).order_by(Ticket.created_at.desc()).all()
     return tickets
+
+
+@app.get("/2fa/status", response_model=TOTPStatusResponse)
+def get_2fa_status(user: User = Depends(get_current_user)):
+    """
+    Get the 2FA status for the authenticated user.
+    Requires JWT authentication.
+    Returns whether 2FA is enabled for the user.
+    """
+    return TOTPStatusResponse(is_2fa_enabled=user.is_2fa_enabled)
