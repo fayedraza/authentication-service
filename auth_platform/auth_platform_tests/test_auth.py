@@ -38,10 +38,16 @@ def test_register_and_login(client):
     }
     register = client.post("/register", json=register_data)
     assert register.status_code == 200
+    # Registration now auto-enables 2FA
+    assert "otpauth_uri" in register.json()
+    assert register.json()["requires_2fa_setup"] is True
 
+    # Login now requires 2FA
     login = client.post("/login", json={"username": username, "password": password})
     assert login.status_code == 200
-    assert "access_token" in login.json()
+    # Should require 2FA verification
+    assert "requires2fa" in login.json()
+    assert login.json()["requires2fa"] is True
 
 
 def test_register_missing_fields(client):
@@ -71,6 +77,8 @@ def test_login_invalid_password(client):
     }
     reg = client.post("/register", json=register_data)
     assert reg.status_code == 200
+    # Registration now auto-enables 2FA
+    assert "otpauth_uri" in reg.json()
 
     # Try to login with wrong password
     bad_login = client.post("/login", json={"username": username, "password": "wrongpassword"})
