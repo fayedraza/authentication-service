@@ -6,5 +6,8 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - ./logs:/app/logs
     environment:
       - ENVIRONMENT=local
+      - DEV_MODE=true
+      - LOG_DIR=/app/logs

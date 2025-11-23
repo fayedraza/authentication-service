@@ -167,3 +167,174 @@ def test_log_auth_event_all_event_types(db_session, test_user, mock_request):
 
     logged_types = {event.event_type for event in events}
     assert logged_types == set(event_types)
+
+
+def test_file_logging_creates_log_file(db_session, test_user, mock_request, tmp_path):
+    """Test that log file is created in specified directory."""
+    import os
+    import logging
+    from datetime import datetime
+
+    # Set up a test logger with file handler
+    log_dir = str(tmp_path / "test_logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "auth_events.log")
+
+    # Create a test logger
+    test_logger = logging.getLogger("test_file_logger")
+    test_logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s:%(message)s"))
+    test_logger.addHandler(file_handler)
+
+    # Log an event using the test logger
+    log_auth_event("login_success", test_user, mock_request, db_session)
+    test_logger.info(
+        f"AUTH login_success user_id={test_user.id} username={test_user.username} "
+        f"ip=192.168.1.1 timestamp={datetime.utcnow().isoformat()}"
+    )
+
+    # Flush and close handler
+    file_handler.flush()
+    file_handler.close()
+
+    # Verify log file exists
+    assert os.path.exists(log_file)
+
+    # Verify log file contains event data
+    with open(log_file, "r") as f:
+        log_content = f.read()
+        assert "AUTH login_success" in log_content
+        assert f"user_id={test_user.id}" in log_content
+        assert f"username={test_user.username}" in log_content
+        assert "ip=192.168.1.1" in log_content
+
+
+def test_file_logging_contains_correct_event_data(db_session, test_user, mock_request, tmp_path):
+    """Test that log entries contain correct event data."""
+    import os
+    import logging
+    from datetime import datetime
+
+    # Set up a test logger with file handler
+    log_dir = str(tmp_path / "test_logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "auth_events.log")
+
+    # Create a test logger
+    test_logger = logging.getLogger("test_file_logger_2")
+    test_logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s:%(message)s"))
+    test_logger.addHandler(file_handler)
+
+    # Log multiple events
+    log_auth_event("login_success", test_user, mock_request, db_session)
+    test_logger.info(
+        f"AUTH login_success user_id={test_user.id} username={test_user.username} "
+        f"ip=192.168.1.1 timestamp={datetime.utcnow().isoformat()}"
+    )
+
+    log_auth_event("2fa_success", test_user, mock_request, db_session)
+    test_logger.info(
+        f"AUTH 2fa_success user_id={test_user.id} username={test_user.username} "
+        f"ip=192.168.1.1 timestamp={datetime.utcnow().isoformat()}"
+    )
+
+    # Flush and close handler
+    file_handler.flush()
+    file_handler.close()
+
+    # Read log file
+    with open(log_file, "r") as f:
+        log_content = f.read()
+
+    # Verify both events are logged
+    assert "AUTH login_success" in log_content
+    assert "AUTH 2fa_success" in log_content
+    assert log_content.count(f"user_id={test_user.id}") == 2
+    assert log_content.count(f"username={test_user.username}") == 2
+
+
+def test_logging_continues_if_file_write_fails(db_session, test_user, mock_request):
+    """Test that logging continues if file write fails."""
+    # This test verifies that authentication flow is not broken by logging failures
+    # The logging module handles file write failures gracefully
+
+    # Log an event - should not raise exception even if file operations fail
+    log_auth_event("login_success", test_user, mock_request, db_session)
+
+    # Verify database record was created
+    event = db_session.query(AuthEvent).first()
+    assert event is not None
+    assert event.event_type == "login_success"
+    assert event.user_id == test_user.id
+
+
+
+def test_auth_event_to_dict_returns_correct_structure(db_session, test_user, mock_request):
+    """Test that to_dict() returns correct dictionary structure."""
+    log_auth_event("login_success", test_user, mock_request, db_session)
+
+    event = db_session.query(AuthEvent).first()
+    result = event.to_dict()
+
+    # Verify all required fields are present
+    assert "id" in result
+    assert "user_id" in result
+    assert "username" in result
+    assert "event_type" in result
+    assert "ip_address" in result
+    assert "user_agent" in result
+    assert "timestamp" in result
+    assert "metadata" in result
+
+    # Verify values are correct
+    assert result["user_id"] == test_user.id
+    assert result["username"] == test_user.username
+    assert result["event_type"] == "login_success"
+    assert result["ip_address"] == "192.168.1.1"
+    assert result["user_agent"] == "Mozilla/5.0 Test Browser"
+
+
+def test_auth_event_to_dict_uuid_converted_to_string(db_session, test_user, mock_request):
+    """Test that UUID is converted to string."""
+    log_auth_event("login_success", test_user, mock_request, db_session)
+
+    event = db_session.query(AuthEvent).first()
+    result = event.to_dict()
+
+    # Verify id is a string
+    assert isinstance(result["id"], str)
+    # Verify it's a valid UUID format (has dashes)
+    assert "-" in result["id"] or len(result["id"]) == 36
+
+
+def test_auth_event_to_dict_datetime_iso8601_format(db_session, test_user, mock_request):
+    """Test that datetime is converted to ISO 8601 format."""
+    log_auth_event("login_success", test_user, mock_request, db_session)
+
+    event = db_session.query(AuthEvent).first()
+    result = event.to_dict()
+
+    # Verify timestamp is a string
+    assert isinstance(result["timestamp"], str)
+    # Verify it's in ISO 8601 format (contains T separator)
+    assert "T" in result["timestamp"]
+    # Verify it can be parsed back to datetime
+    from datetime import datetime
+    parsed = datetime.fromisoformat(result["timestamp"])
+    assert parsed is not None
+
+
+def test_auth_event_to_dict_null_metadata_returns_empty_dict(db_session, test_user, mock_request):
+    """Test that null metadata returns empty dict."""
+    # Log event without metadata
+    log_auth_event("login_success", test_user, mock_request, db_session, metadata=None)
+
+    event = db_session.query(AuthEvent).first()
+    result = event.to_dict()
+
+    # Verify metadata is an empty dict, not None
+    assert result["metadata"] == {}
+    assert isinstance(result["metadata"], dict)

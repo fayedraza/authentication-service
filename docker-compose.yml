@@ -9,6 +9,8 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:///./app.db
+      - ENVIRONMENT=local
+      - DEV_MODE=true
 
   dev_portal_ui:
     build:

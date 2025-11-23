@@ -6,8 +6,32 @@ from fastapi import Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import sys
+import logging
+import os
 
 from ..models import AuthEvent, User
+
+# Configure file and stdout logging
+log_dir = os.getenv("LOG_DIR", "/app/logs")
+
+# Create handlers list
+handlers = [logging.StreamHandler(sys.stdout)]
+
+# Try to add file handler, but continue without it if directory creation fails
+try:
+    os.makedirs(log_dir, exist_ok=True)
+    handlers.append(logging.FileHandler(f"{log_dir}/auth_events.log"))
+except (OSError, PermissionError) as e:
+    # Log to stderr if file logging setup fails
+    print(f"WARNING: Could not set up file logging: {e}", file=sys.stderr)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s:%(message)s",
+    handlers=handlers
+)
+
+logger = logging.getLogger(__name__)
 
 
 ALLOWED_EVENT_TYPES = {
@@ -73,6 +97,12 @@ def log_auth_event(
 
         db.add(auth_event)
         db.commit()
+
+        # Log to file and stdout
+        logger.info(
+            "AUTH %s user_id=%s username=%s ip=%s timestamp=%s",
+            event_type, user.id, user.username, ip_address, datetime.utcnow().isoformat()
+        )
 
     except SQLAlchemyError as e:
         # Log error but don't raise - logging failure should not break auth flow

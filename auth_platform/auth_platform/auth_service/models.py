@@ -72,3 +72,22 @@ class AuthEvent(Base):
         Index('ix_auth_events_event_type', 'event_type'),
         Index('ix_auth_events_user_id_timestamp', 'user_id', 'timestamp'),
     )
+
+    def to_dict(self) -> dict:
+        """
+        Serialize AuthEvent to dictionary for API responses and MCP consumption.
+
+        Returns:
+            Dictionary with all event fields, UUIDs as strings,
+            datetimes in ISO 8601 format
+        """
+        return {
+            "id": str(self.id),
+            "user_id": self.user_id,
+            "username": self.username,
+            "event_type": self.event_type,
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "metadata": self.event_metadata or {}
+        }

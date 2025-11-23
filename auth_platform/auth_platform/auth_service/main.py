@@ -20,6 +20,7 @@ from .schemas import (
 )
 from .auth import hash_password, verify_password, create_access_token, check_rate_limit, record_totp_attempt
 from .utils.event_logger import log_auth_event
+from .routes import dev_monitor
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Union, Optional
 import os
@@ -38,6 +39,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include dev monitor router
+app.include_router(dev_monitor.router)
 
 @app.on_event("startup")
 def startup():
