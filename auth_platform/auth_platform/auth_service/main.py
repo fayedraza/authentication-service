@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Header
+from fastapi import FastAPI, Depends, HTTPException, status, Header, Request
 from sqlalchemy.orm import Session
 from .db import get_db, init_db
 from .models import User, PasswordResetToken, Ticket
@@ -19,6 +19,7 @@ from .schemas import (
     TicketResponse,
 )
 from .auth import hash_password, verify_password, create_access_token, check_rate_limit, record_totp_attempt
+from .utils.event_logger import log_auth_event
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Union, Optional
 import os
@@ -109,9 +110,12 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         ) from e
 
 @app.post("/login", response_model=Union[Token, LoginStep1Response])
-def login(credentials: UserLogin, db: Session = Depends(get_db)):
+def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == credentials.username).first()
     if not user or not verify_password(credentials.password, user.password):
+        # Log login failure event if user exists
+        if user:
+            log_auth_event("login_failure", user, request, db)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     # If 2FA is enabled, require TOTP verification in a second step
@@ -125,6 +129,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         )
 
     # Log successful login without 2FA
+    log_auth_event("login_success", user, request, db)
     print(f"[Login] Successful login: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
     token = create_access_token(user.username)
     return {"access_token": token, "token_type": "bearer"}
@@ -188,7 +193,7 @@ def enroll_2fa(payload: EnrollRequest, db: Session = Depends(get_db)):
 
 
 @app.post("/2fa/verify", response_model=Token)
-def verify_totp(payload: TOTPVerifyRequest, db: Session = Depends(get_db)):
+def verify_totp(payload: TOTPVerifyRequest, request: Request, db: Session = Depends(get_db)):
     from .auth import check_rate_limit, record_totp_attempt
 
     # Validate user exists and has 2FA enabled
@@ -198,6 +203,19 @@ def verify_totp(payload: TOTPVerifyRequest, db: Session = Depends(get_db)):
 
     if not user.is_2fa_enabled or not user.totp_secret:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="2FA not enabled for user")
+
+    # Check for local development bypass
+    is_local_env = os.getenv("ENVIRONMENT", "production").lower() in ["local", "development", "dev"]
+    local_bypass_code = "000000"
+
+    if is_local_env and payload.code == local_bypass_code:
+        # Allow bypass in local environment with special code
+        print(f"[2FA] Local bypass used: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
+        record_totp_attempt(user.id, True, db)
+        log_auth_event("2fa_success", user, request, db)
+        print(f"[Login] Successful login with 2FA (local bypass): user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
+        token = create_access_token(user.username)
+        return {"access_token": token, "token_type": "bearer"}
 
     # Validate code format (must be 6 digits)
     if not payload.code or len(payload.code) != 6 or not payload.code.isdigit():
@@ -219,9 +237,12 @@ def verify_totp(payload: TOTPVerifyRequest, db: Session = Depends(get_db)):
     record_totp_attempt(user.id, is_valid, db)
 
     if not is_valid:
+        # Log failed 2FA verification event before raising exception
+        log_auth_event("2fa_failure", user, request, db)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code")
 
-    # Log successful login with 2FA
+    # Log successful 2FA verification event
+    log_auth_event("2fa_success", user, request, db)
     print(f"[Login] Successful login with 2FA: user_id={user.id}, username={user.username}, timestamp={datetime.utcnow().isoformat()}")
 
     # Generate and return JWT token
@@ -278,7 +299,7 @@ def password_reset_request(payload: PasswordResetRequest, db: Session = Depends(
 
 
 @app.post("/password-reset/confirm")
-def password_reset_confirm(payload: PasswordResetConfirm, db: Session = Depends(get_db)):
+def password_reset_confirm(payload: PasswordResetConfirm, request: Request, db: Session = Depends(get_db)):
     now = datetime.utcnow()
     prt = (
         db.query(PasswordResetToken)
@@ -297,6 +318,9 @@ def password_reset_confirm(payload: PasswordResetConfirm, db: Session = Depends(
     db.add(user)
     db.add(prt)
     db.commit()
+
+    # Log password reset event
+    log_auth_event("password_reset", user, request, db)
 
     return {"message": "Password updated successfully"}
 

@@ -13,17 +13,23 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
     # Create index for TOTP attempts if not exists
-    from .models import TOTPAttempt  # Import here to avoid circular dependency
+    from .models import TOTPAttempt, AuthEvent  # Import here to avoid circular dependency
     inspector = inspect(engine)
-    existing_indexes = [idx['name'] for idx in inspector.get_indexes('totp_attempts')]
 
-    if 'idx_totp_attempts_user_time' not in existing_indexes:
+    # TOTP attempts index
+    existing_totp_indexes = [idx['name'] for idx in inspector.get_indexes('totp_attempts')]
+    if 'idx_totp_attempts_user_time' not in existing_totp_indexes:
         idx = Index('idx_totp_attempts_user_time', TOTPAttempt.user_id, TOTPAttempt.attempted_at)
         try:
             idx.create(bind=engine)
         except SQLAlchemyError:
             # Index may already exist (race condition)
             pass
+
+    # AuthEvent indexes (already defined in model __table_args__, but verify creation)
+    # The indexes are: ix_auth_events_user_id, ix_auth_events_timestamp,
+    # ix_auth_events_event_type, ix_auth_events_user_id_timestamp
+    # These are automatically created by Base.metadata.create_all() above
 
 def get_db():
     db = SessionLocal()

@@ -576,3 +576,85 @@ def test_login_after_disable(client):
     data = resp.json()
     assert "access_token" in data
     assert data.get("requires2fa") is None or data.get("requires2fa") is False
+
+
+def test_2fa_success_logs_event(client):
+    """Test that successful 2FA verification logs a 2fa_success event."""
+    from auth_platform.auth_platform.auth_service.models import AuthEvent
+
+    username = "2fa_success_event_user"
+    password = "Secret123!"
+    ensure_user(username, password)
+
+    # Enroll in 2FA
+    enroll = client.post("/2fa/enroll", json={"username": username, "password": password})
+    assert enroll.status_code == 200
+
+    # Get secret for generating valid code
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.username == username).first()
+        user_id = user.id
+        secret = user.totp_secret
+    finally:
+        db.close()
+
+    # Verify with valid TOTP code
+    code = pyotp.TOTP(secret).now()
+    resp = client.post("/2fa/verify", json={"username": username, "code": code})
+    assert resp.status_code == 200
+
+    # Verify 2fa_success event was logged
+    db = SessionLocal()
+    try:
+        events = db.query(AuthEvent).filter(
+            AuthEvent.user_id == user_id,
+            AuthEvent.event_type == "2fa_success"
+        ).all()
+        assert len(events) == 1
+        event = events[0]
+        assert event.username == username
+        assert event.ip_address is not None
+        assert event.timestamp is not None
+    finally:
+        db.close()
+
+
+def test_2fa_failure_logs_event(client):
+    """Test that failed 2FA verification logs a 2fa_failure event."""
+    from auth_platform.auth_platform.auth_service.models import AuthEvent
+
+    username = "2fa_failure_event_user"
+    password = "Secret123!"
+    ensure_user(username, password)
+
+    # Enroll in 2FA
+    enroll = client.post("/2fa/enroll", json={"username": username, "password": password})
+    assert enroll.status_code == 200
+
+    # Get user ID
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.username == username).first()
+        user_id = user.id
+    finally:
+        db.close()
+
+    # Verify with invalid TOTP code
+    resp = client.post("/2fa/verify", json={"username": username, "code": "000000"})
+    assert resp.status_code == 401
+
+    # Verify 2fa_failure event was logged
+    db = SessionLocal()
+    try:
+        events = db.query(AuthEvent).filter(
+            AuthEvent.user_id == user_id,
+            AuthEvent.event_type == "2fa_failure"
+        ).all()
+        assert len(events) == 1
+        event = events[0]
+        assert event.username == username
+        assert event.ip_address is not None
+        assert event.timestamp is not None
+    finally:
+        db.close()

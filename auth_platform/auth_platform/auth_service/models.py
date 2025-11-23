@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text, Enum, Index, JSON
 from datetime import datetime
 from .db import Base
 from sqlalchemy.orm import relationship
+import uuid
 
 class User(Base):
     __tablename__ = "users"
@@ -47,3 +48,27 @@ class TOTPAttempt(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     attempted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     success = Column(Boolean, nullable=False)
+
+
+class AuthEvent(Base):
+    __tablename__ = "auth_events"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    username = Column(String, nullable=False)
+    event_type = Column(
+        Enum("login_success", "login_failure", "2fa_success", "2fa_failure", "password_reset",
+             name="auth_event_type"),
+        nullable=False
+    )
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    event_metadata = Column(JSON, nullable=True)
+
+    __table_args__ = (
+        Index('ix_auth_events_user_id', 'user_id'),
+        Index('ix_auth_events_timestamp', 'timestamp'),
+        Index('ix_auth_events_event_type', 'event_type'),
+        Index('ix_auth_events_user_id_timestamp', 'user_id', 'timestamp'),
+    )

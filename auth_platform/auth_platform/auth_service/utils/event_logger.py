@@ -1,0 +1,84 @@
+"""
+Event logger utility for authentication events.
+"""
+from datetime import datetime
+from fastapi import Request
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+import sys
+
+from ..models import AuthEvent, User
+
+
+ALLOWED_EVENT_TYPES = {
+    "login_success",
+    "login_failure",
+    "2fa_success",
+    "2fa_failure",
+    "password_reset"
+}
+
+
+def log_auth_event(
+    event_type: str,
+    user: User,
+    request: Request,
+    db: Session,
+    metadata: dict = None
+) -> None:
+    """
+    Log an authentication event to the database.
+
+    Args:
+        event_type: One of: login_success, login_failure, 2fa_success,
+                    2fa_failure, password_reset
+        user: User object from database
+        request: FastAPI Request object
+        db: Database session
+        metadata: Optional dictionary of additional context
+
+    Raises:
+        ValueError: If event_type is invalid
+    """
+    # Validate event type
+    if event_type not in ALLOWED_EVENT_TYPES:
+        raise ValueError(
+            f"Invalid event_type '{event_type}'. Must be one of: {', '.join(ALLOWED_EVENT_TYPES)}"
+        )
+
+    # Extract IP address with X-Forwarded-For fallback
+    ip_address = None
+    if request.client:
+        ip_address = request.client.host
+
+    # Check for X-Forwarded-For header (proxy/load balancer scenarios)
+    if not ip_address and request.headers.get("x-forwarded-for"):
+        # X-Forwarded-For can contain multiple IPs, take the first one
+        ip_address = request.headers.get("x-forwarded-for").split(",")[0].strip()
+
+    # Extract user agent
+    user_agent = request.headers.get("user-agent")
+
+    # Create AuthEvent instance
+    try:
+        auth_event = AuthEvent(
+            user_id=user.id,
+            username=user.username,
+            event_type=event_type,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            timestamp=datetime.utcnow(),
+            event_metadata=metadata or {}
+        )
+
+        db.add(auth_event)
+        db.commit()
+
+    except SQLAlchemyError as e:
+        # Log error but don't raise - logging failure should not break auth flow
+        print(
+            f"WARNING: Failed to log auth event - "
+            f"user_id={user.id}, event_type={event_type}, error={str(e)}",
+            file=sys.stderr
+        )
+        db.rollback()

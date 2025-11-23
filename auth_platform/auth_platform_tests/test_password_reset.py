@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from auth_platform.auth_platform.auth_service.main import app
 from auth_platform.auth_platform.auth_service.db import Base, engine, SessionLocal
-from auth_platform.auth_platform.auth_service.models import User, PasswordResetToken
+from auth_platform.auth_platform.auth_service.models import User, PasswordResetToken, AuthEvent
 from auth_platform.auth_platform.auth_service.auth import hash_password
 import time
 from datetime import datetime, timedelta
@@ -84,3 +84,42 @@ def test_password_reset_confirm_rejects_invalid_token():
     ensure_user()
     bad = client.post("/password-reset/confirm", json={"token": "not-a-token", "new_password": "x"})
     assert bad.status_code == 400
+
+
+def test_password_reset_confirm_logs_event():
+    """Test that password reset creates a password_reset event in auth_events table"""
+    reset_db()
+    user_info = ensure_user(password="OldPass1!")
+
+    # Request a token
+    resp = client.post("/password-reset/request", json={"email": user_info["email"]})
+    assert resp.status_code == 200
+
+    # Load token directly from DB (simulating email)
+    db = SessionLocal()
+    try:
+        u = db.query(User).filter(User.email == user_info["email"]).first()
+        user_id = u.id
+        prt = db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).first()
+        token = prt.token
+    finally:
+        db.close()
+
+    # Confirm with new password
+    confirm = client.post("/password-reset/confirm", json={"token": token, "new_password": "NewPass2!"})
+    assert confirm.status_code == 200
+
+    # Verify password_reset event was created
+    db = SessionLocal()
+    try:
+        events = db.query(AuthEvent).filter(
+            AuthEvent.user_id == user_id,
+            AuthEvent.event_type == "password_reset"
+        ).all()
+        assert len(events) == 1
+        event = events[0]
+        assert event.username == user_info["username"]
+        assert event.ip_address is not None
+        assert event.timestamp is not None
+    finally:
+        db.close()
