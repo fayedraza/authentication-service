@@ -47,7 +47,7 @@ curl -X POST http://localhost:8000/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
-    "password": "SecurePass123!"
+    "password": "SecurePass123!"  # pragma: allowlist secret
   }' | python -m json.tool
 ```
 
@@ -94,7 +94,7 @@ curl -X POST http://localhost:8000/2fa/disable \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
-    "password": "SecurePass123!"
+    "password": "SecurePass123!"  # pragma: allowlist secret
   }' | python -m json.tool
 ```
 
@@ -105,7 +105,7 @@ curl -X POST http://localhost:8000/2fa/enroll \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
-    "password": "SecurePass123!"
+    "password": "SecurePass123!"  # pragma: allowlist secret
   }' | python -m json.tool
 ```
 
