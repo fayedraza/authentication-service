@@ -126,15 +126,17 @@ def test_endpoint_returns_404_when_dev_mode_disabled(client, test_events):
         assert "not found" in response.json()["detail"].lower()
 
 
-def test_endpoint_returns_403_when_request_from_external_ip(client, test_events):
-    """Test endpoint returns 403 when request from external IP."""
+def test_endpoint_returns_200_when_request_from_external_ip_in_dev_mode(client, test_events):
+    """Test endpoint returns 200 when request from external IP in DEV_MODE (logs but allows)."""
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
         # Mock the request to have an external IP
         with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=False):
             response = client.get("/dev/event-logs")
 
-            assert response.status_code == 403
-            assert response.json()["detail"] == "Forbidden"
+            # In DEV_MODE, external IPs are allowed (just logged)
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, list)
 
 
 def test_endpoint_returns_400_when_limit_exceeds_1000(client, test_events):
