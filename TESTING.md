@@ -30,7 +30,7 @@ curl -X POST http://localhost:8000/register \
     "first_name": "Test",
     "last_name": "User",
     "email": "test@example.com",
-    "password": "SecurePass123!",  # pragma: allowlist secret
+    "password": "SecurePass123!",
     "tier": "dev"
   }' | python -m json.tool
 ```
@@ -47,7 +47,7 @@ curl -X POST http://localhost:8000/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
-    "password": "SecurePass123!"  # pragma: allowlist secret
+    "password": "SecurePass123!"
   }' | python -m json.tool
 ```
 
@@ -94,7 +94,7 @@ curl -X POST http://localhost:8000/2fa/disable \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
-    "password": "SecurePass123!"  # pragma: allowlist secret
+    "password": "SecurePass123!"
   }' | python -m json.tool
 ```
 
@@ -105,7 +105,7 @@ curl -X POST http://localhost:8000/2fa/enroll \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
-    "password": "SecurePass123!"  # pragma: allowlist secret
+    "password": "SecurePass123!"
   }' | python -m json.tool
 ```
 
@@ -129,7 +129,7 @@ curl -X POST http://localhost:8000/password-reset/confirm \
   -H "Content-Type: application/json" \
   -d '{
     "token": "RESET_TOKEN",
-    "new_password": "NewSecurePass123!"  # pragma: allowlist secret
+    "new_password": "NewSecurePass123!"
   }' | python -m json.tool
 ```
 

@@ -42,7 +42,7 @@ def test_user(db_session):
         first_name="Test",
         last_name="User",
         email="test@example.com",
-        password="hashed_password",  # pragma: allowlist secret
+        password="hashed_password",
         tier="dev"
     )
     db_session.add(user)
