@@ -557,7 +557,7 @@ def test_alert_threshold_triggers_above_threshold(db_session, fraud_detector, ba
     assessment = fraud_detector.analyze_event(base_event, db_session)
 
     assert assessment.risk_score >= 0.7
-    assert assessment.alert is True
+    assert assessment.email_notification is True
 
 
 def test_alert_threshold_no_trigger_below_threshold(db_session, fraud_detector, base_event):
@@ -588,7 +588,7 @@ def test_alert_threshold_no_trigger_below_threshold(db_session, fraud_detector, 
     assessment = fraud_detector.analyze_event(base_event, db_session)
 
     assert assessment.risk_score < 0.7
-    assert assessment.alert is False
+    assert assessment.email_notification is False
 
 
 def test_alert_threshold_custom_threshold(db_session, base_event):
@@ -621,7 +621,7 @@ def test_alert_threshold_custom_threshold(db_session, base_event):
 
     # Risk score is 0.4, which is below default 0.7 but below custom 0.5
     assert assessment.risk_score == 0.4
-    assert assessment.alert is False
+    assert assessment.email_notification is False
 
 
 # ============================================================================
@@ -727,7 +727,7 @@ def test_baml_analysis_success(mock_get_baml_client, db_session, base_event):
 
     # Should use BAML result
     assert assessment.risk_score == 0.85
-    assert assessment.alert is True
+    assert assessment.email_notification is True
     assert assessment.confidence == 0.95
     assert "[BAML]" in assessment.reason
     assert "AI detected suspicious pattern" in assessment.reason
@@ -792,7 +792,7 @@ def test_error_handling_returns_safe_default(db_session, base_event):
     # Should handle errors gracefully and return a result
     # Since all helper methods return safe defaults (0, False), we get normal pattern
     assert assessment.risk_score == 0.0
-    assert assessment.alert is False
+    assert assessment.email_notification is False
     assert assessment.confidence == 1.0
     # The reason will be "Normal authentication pattern" since no rules triggered
 
