@@ -4,4 +4,4 @@
 # Test-specific dependencies
 pytest==7.4.4
 pytest-asyncio==0.21.1
-testcontainers==3.7.1
+pydantic-settings
