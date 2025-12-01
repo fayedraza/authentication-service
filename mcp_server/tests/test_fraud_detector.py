@@ -12,11 +12,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from unittest.mock import Mock, patch
 
-from mcp_server.db import Base
-from mcp_server.models import MCPAuthEvent
-from mcp_server.fraud_detector import FraudDetector, FraudAssessment
-from mcp_server.schemas import AuthEventIn
-from mcp_server.baml_client import BAMLClient, BAMLFraudAssessment, LoginEvent
+from db import Base
+from models import MCPAuthEvent
+from fraud_detector import FraudDetector, FraudAssessment
+from schemas import AuthEventIn
+from baml_client import BAMLClient, BAMLFraudAssessment, LoginEvent
 
 # Create test database
 TEST_DATABASE_URL = "sqlite:///:memory:"
