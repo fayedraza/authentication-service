@@ -8,6 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 import sys
 import logging
 import os
+import httpx
+import asyncio
+from typing import Optional
 
 from ..models import AuthEvent, User
 
@@ -33,6 +36,11 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+# MCP Server configuration
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://mcp-server:8001")
+MCP_PUSH_ENABLED = os.getenv("MCP_PUSH_ENABLED", "true").lower() == "true"
+MCP_TIMEOUT_SECONDS = float(os.getenv("MCP_TIMEOUT_SECONDS", "2.0"))
+MCP_MAX_RETRIES = int(os.getenv("MCP_MAX_RETRIES", "2"))
 
 ALLOWED_EVENT_TYPES = {
     "login_success",
@@ -41,6 +49,95 @@ ALLOWED_EVENT_TYPES = {
     "2fa_failure",
     "password_reset"
 }
+
+
+async def push_event_to_mcp(
+    event_data: dict,
+    retry_count: int = 0
+) -> None:
+    """
+    Asynchronously push an authentication event to the MCP Server.
+
+    Args:
+        event_data: Dictionary containing event data to send
+        retry_count: Current retry attempt number
+    """
+    if not MCP_PUSH_ENABLED:
+        return
+
+    try:
+        async with httpx.AsyncClient(timeout=MCP_TIMEOUT_SECONDS) as client:
+            response = await client.post(
+                f"{MCP_SERVER_URL}/mcp/ingest",
+                json=event_data
+            )
+
+            if response.status_code == 201:
+                logger.info(
+                    "MCP push successful: user_id=%s, event_type=%s",
+                    event_data.get("user_id"),
+                    event_data.get("event_type")
+                )
+            else:
+                logger.warning(
+                    "MCP push failed with status %s: user_id=%s, event_type=%s",
+                    response.status_code,
+                    event_data.get("user_id"),
+                    event_data.get("event_type")
+                )
+
+                # Retry on server errors (5xx) if retries remaining
+                if response.status_code >= 500 and retry_count < MCP_MAX_RETRIES:
+                    await asyncio.sleep(0.5 * (retry_count + 1))  # Exponential backoff
+                    await push_event_to_mcp(event_data, retry_count + 1)
+
+    except httpx.TimeoutException:
+        logger.warning(
+            "MCP push timeout: user_id=%s, event_type=%s (attempt %s/%s)",
+            event_data.get("user_id"),
+            event_data.get("event_type"),
+            retry_count + 1,
+            MCP_MAX_RETRIES + 1
+        )
+
+        # Retry on timeout if retries remaining
+        if retry_count < MCP_MAX_RETRIES:
+            await asyncio.sleep(0.5 * (retry_count + 1))
+            await push_event_to_mcp(event_data, retry_count + 1)
+
+    except httpx.ConnectError:
+        logger.warning(
+            "MCP Server unavailable: user_id=%s, event_type=%s - continuing auth flow",
+            event_data.get("user_id"),
+            event_data.get("event_type")
+        )
+
+    except Exception as e:
+        logger.warning(
+            "MCP push error: user_id=%s, event_type=%s, error=%s",
+            event_data.get("user_id"),
+            event_data.get("event_type"),
+            str(e)
+        )
+
+
+def _schedule_mcp_push(event_data: dict) -> None:
+    """
+    Schedule an async MCP push without blocking the current thread.
+    Creates a new event loop if needed for background execution.
+    """
+    try:
+        # Try to get the current event loop
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If loop is running, create a task
+            asyncio.create_task(push_event_to_mcp(event_data))
+        else:
+            # If no loop is running, run in new loop
+            loop.run_until_complete(push_event_to_mcp(event_data))
+    except RuntimeError:
+        # No event loop exists, create one
+        asyncio.run(push_event_to_mcp(event_data))
 
 
 def log_auth_event(
@@ -85,24 +182,40 @@ def log_auth_event(
 
     # Create AuthEvent instance
     try:
+        timestamp = datetime.utcnow()
         auth_event = AuthEvent(
             user_id=user.id,
             username=user.username,
             event_type=event_type,
             ip_address=ip_address,
             user_agent=user_agent,
-            timestamp=datetime.utcnow(),
+            timestamp=timestamp,
             event_metadata=metadata or {}
         )
 
         db.add(auth_event)
         db.commit()
+        db.refresh(auth_event)
 
         # Log to file and stdout
         logger.info(
             "AUTH %s user_id=%s username=%s ip=%s timestamp=%s",
-            event_type, user.id, user.username, ip_address, datetime.utcnow().isoformat()
+            event_type, user.id, user.username, ip_address, timestamp.isoformat()
         )
+
+        # Push event to MCP Server asynchronously (non-blocking)
+        event_data = {
+            "user_id": user.id,
+            "username": user.username,
+            "event_type": event_type,
+            "ip_address": ip_address,
+            "user_agent": user_agent,
+            "timestamp": timestamp.isoformat(),
+            "metadata": metadata or {}
+        }
+
+        # Schedule async push without blocking
+        _schedule_mcp_push(event_data)
 
     except SQLAlchemyError as e:
         # Log error but don't raise - logging failure should not break auth flow

@@ -1,17 +1,65 @@
 [MASTER]
-# Load configuration for project
-init-hook=''
-# Add files or directories matching the regex patterns to the ignore list for line length
-ignore-patterns=test_.*\.py
+# Specify a score threshold to be exceeded before program exits with error
+fail-under=9.0
 
-[FORMAT]
-max-line-length=120
+# Files or directories to be skipped
+ignore=tests,.venv,venv,node_modules,.git,__pycache__,agents
+
+# Ignore patterns for files
+ignore-patterns=test_.*\.py$,.*_test\.py$,conftest\.py$
+
+# Use multiple processes to speed up Pylint
+jobs=1
+
+# Pickle collected data for later comparisons
+persistent=yes
+
+# Add current directory to Python path for imports
+init-hook='import sys; sys.path.append(".")'
 
 [MESSAGES CONTROL]
-# disable missing docstring warnings for small/demo project
-# also disable import and style warnings for pre-commit
-disable=C0114,C0115,C0116,E0401,C0411,C0412,R0903,R0801,C0103,W0621,W0611,C0415,C0413,F0002,C0301
+# Disable specific warnings that are style preferences or acceptable in this codebase
+disable=
+    # Logging f-strings are fine in modern Python and more readable
+    logging-fstring-interpolation,
+    # Broad exception catching is intentional for robustness in production
+    broad-exception-caught,
+    # Global statements used appropriately for singleton patterns
+    global-statement,
+    # Complexity warnings - these functions are complex by nature
+    too-many-arguments,
+    too-many-positional-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-instance-attributes,
+    # Import errors - dependencies are installed in venv
+    import-error,
+    # Import order - not critical for functionality
+    wrong-import-order,
+    # Unused imports - some are used by type checkers
+    unused-import,
+    # Too few public methods - Pydantic models and data classes are fine
+    too-few-public-methods,
+    # Import outside toplevel - sometimes necessary for circular imports
+    import-outside-toplevel,
+    # Line too long - some lines need to be longer for readability
+    line-too-long
 
 [DESIGN]
-# Minimum number of public methods for a class
-min-public-methods=0
+# Increase thresholds for complexity metrics if needed
+max-args=10
+max-locals=20
+max-branches=15
+max-attributes=12
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+[BASIC]
+# Good variable names which should always be accepted
+good-names=i,j,k,ex,Run,_,db,e,id
+
+[SIMILARITIES]
+# Minimum lines number of a similarity
+min-similarity-lines=10

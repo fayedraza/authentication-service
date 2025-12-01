@@ -1,0 +1,147 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-11-30T08:30:00.000Z",
+  "__export_source": "mcp-server-api:v1.0.0",
+  "resources": [
+    {
+      "_id": "wrk_mcp",
+      "_type": "workspace",
+      "name": "MCP Server API",
+      "description": "Monitoring + Control Plane for Authentication Events"
+    },
+    {
+      "_id": "env_mcp",
+      "_type": "environment",
+      "parentId": "wrk_mcp",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8001"
+      }
+    },
+    {
+      "_id": "fld_health",
+      "_type": "request_group",
+      "parentId": "wrk_mcp",
+      "name": "Health Checks"
+    },
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "parentId": "fld_health",
+      "name": "Health Check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health"
+    },
+    {
+      "_id": "req_ready",
+      "_type": "request",
+      "parentId": "fld_health",
+      "name": "Readiness Check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/ready"
+    },
+    {
+      "_id": "fld_ingest",
+      "_type": "request_group",
+      "parentId": "wrk_mcp",
+      "name": "Event Ingestion"
+    },
+    {
+      "_id": "req_ingest_success",
+      "_type": "request",
+      "parentId": "fld_ingest",
+      "name": "Ingest Login Success",
+      "method": "POST",
+      "url": "{{ _.base_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 123,\n  \"username\": \"john.doe\",\n  \"event_type\": \"login_success\",\n  \"ip_address\": \"192.168.1.100\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_ingest_failure",
+      "_type": "request",
+      "parentId": "fld_ingest",
+      "name": "Ingest Login Failure",
+      "method": "POST",
+      "url": "{{ _.base_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 456,\n  \"username\": \"suspicious.user\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.1\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T10:35:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_events",
+      "_type": "request_group",
+      "parentId": "wrk_mcp",
+      "name": "Event Queries"
+    },
+    {
+      "_id": "req_events_all",
+      "_type": "request",
+      "parentId": "fld_events",
+      "name": "Get All Events",
+      "method": "GET",
+      "url": "{{ _.base_url }}/mcp/events"
+    },
+    {
+      "_id": "req_events_user",
+      "_type": "request",
+      "parentId": "fld_events",
+      "name": "Get Events by User",
+      "method": "GET",
+      "url": "{{ _.base_url }}/mcp/events?user_id=123"
+    },
+    {
+      "_id": "fld_fraud",
+      "_type": "request_group",
+      "parentId": "wrk_mcp",
+      "name": "Fraud Assessments"
+    },
+    {
+      "_id": "req_fraud_all",
+      "_type": "request",
+      "parentId": "fld_fraud",
+      "name": "Get All Fraud Assessments",
+      "method": "GET",
+      "url": "{{ _.base_url }}/mcp/fraud-assessments"
+    },
+    {
+      "_id": "req_fraud_high",
+      "_type": "request",
+      "parentId": "fld_fraud",
+      "name": "Get High Risk Events",
+      "method": "GET",
+      "url": "{{ _.base_url }}/mcp/fraud-assessments?min_risk_score=0.7"
+    },
+    {
+      "_id": "fld_alerts",
+      "_type": "request_group",
+      "parentId": "wrk_mcp",
+      "name": "Alert Management"
+    },
+    {
+      "_id": "req_alerts_all",
+      "_type": "request",
+      "parentId": "fld_alerts",
+      "name": "Get All Alerts",
+      "method": "GET",
+      "url": "{{ _.base_url }}/mcp/alerts"
+    },
+    {
+      "_id": "req_alerts_open",
+      "_type": "request",
+      "parentId": "fld_alerts",
+      "name": "Get Open Alerts",
+      "method": "GET",
+      "url": "{{ _.base_url }}/mcp/alerts?status=open"
+    }
+  ]
+}

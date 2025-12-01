@@ -11,3 +11,26 @@ services:
       - ENVIRONMENT=local
       - DEV_MODE=true
       - LOG_DIR=/app/logs
+      - MCP_SERVER_URL=http://mcp-server:8001
+      - MCP_PUSH_ENABLED=true
+      - MCP_TIMEOUT_SECONDS=2.0
+      - MCP_MAX_RETRIES=2
+    depends_on:
+      - mcp-server
+
+  mcp-server:
+    build: ../mcp_server
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../mcp_server:/app
+    environment:
+      - MCP_PORT=8001
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=sqlite:///./mcp.db
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - FRAUD_THRESHOLD=0.7
+      - RULE_BASED_FALLBACK=true
+      - BAML_ENABLED=false
+      - ALERT_CONSOLIDATION_WINDOW_MINUTES=5
+      - MAX_EVENTS_PER_ALERT=10

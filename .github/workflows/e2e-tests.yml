@@ -1,0 +1,63 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio httpx
+
+      - name: Start Docker Compose services
+        run: |
+          cd auth_platform
+          docker compose up -d --build
+          echo "Waiting for services to be ready..."
+          sleep 20
+
+      - name: Check service health
+        run: |
+          echo "Checking Auth Service..."
+          curl -f http://localhost:8000/docs || exit 1
+          echo "✓ Auth Service is up"
+
+          echo "Checking MCP Server..."
+          curl -f http://localhost:8001/health || exit 1
+          echo "✓ MCP Server is up"
+
+      - name: Run E2E tests
+        run: |
+          cd mcp_server
+          pytest tests/test_e2e_ci.py -v -s --log-cli-level=INFO
+
+      - name: Show MCP Server logs on failure
+        if: failure()
+        run: |
+          echo "=== MCP Server Logs ==="
+          docker logs auth_platform-mcp-server-1
+          echo ""
+          echo "=== Auth Service Logs ==="
+          docker logs auth_platform-auth-service-1
+
+      - name: Stop Docker Compose services
+        if: always()
+        run: |
+          cd auth_platform
+          docker compose down -v

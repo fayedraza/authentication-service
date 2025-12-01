@@ -338,3 +338,57 @@ def test_auth_event_to_dict_null_metadata_returns_empty_dict(db_session, test_us
     # Verify metadata is an empty dict, not None
     assert result["metadata"] == {}
     assert isinstance(result["metadata"], dict)
+
+
+def test_mcp_push_disabled_by_env_var(db_session, test_user, mock_request, monkeypatch):
+    """Test that MCP push can be disabled via environment variable."""
+    import os
+    from unittest.mock import patch
+
+    # Disable MCP push
+    monkeypatch.setenv("MCP_PUSH_ENABLED", "false")
+
+    # Reload the module to pick up new env var
+    import importlib
+    from auth_platform.auth_platform.auth_service.utils import event_logger
+    importlib.reload(event_logger)
+
+    # Mock httpx to ensure it's not called
+    with patch("auth_platform.auth_platform.auth_service.utils.event_logger.httpx.AsyncClient") as mock_client:
+        event_logger.log_auth_event("login_success", test_user, mock_request, db_session)
+
+        # Verify httpx was not called since MCP push is disabled
+        mock_client.assert_not_called()
+
+    # Verify database record was still created
+    event = db_session.query(AuthEvent).first()
+    assert event is not None
+    assert event.event_type == "login_success"
+
+
+def test_mcp_push_handles_connection_error(db_session, test_user, mock_request, monkeypatch, capsys):
+    """Test that MCP push handles connection errors gracefully."""
+    from unittest.mock import patch, AsyncMock
+    import httpx
+
+    # Enable MCP push
+    monkeypatch.setenv("MCP_PUSH_ENABLED", "true")
+
+    # Reload the module to pick up new env var
+    import importlib
+    from auth_platform.auth_platform.auth_service.utils import event_logger
+    importlib.reload(event_logger)
+
+    # Mock httpx to raise ConnectError
+    with patch("auth_platform.auth_platform.auth_service.utils.event_logger.httpx.AsyncClient") as mock_client:
+        mock_context = AsyncMock()
+        mock_context.__aenter__.return_value.post = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
+        mock_client.return_value = mock_context
+
+        # Should not raise exception
+        event_logger.log_auth_event("login_success", test_user, mock_request, db_session)
+
+    # Verify database record was still created
+    event = db_session.query(AuthEvent).first()
+    assert event is not None
+    assert event.event_type == "login_success"

@@ -1,0 +1,178 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-11-30T09:00:00.000Z",
+  "__export_source": "email-notification-testing:v1.0.0",
+  "resources": [
+    {
+      "_id": "wrk_email_test",
+      "_type": "workspace",
+      "name": "Email Notification Testing",
+      "description": "Test email notification triggers via logs"
+    },
+    {
+      "_id": "env_email_test",
+      "_type": "environment",
+      "parentId": "wrk_email_test",
+      "name": "Base Environment",
+      "data": {
+        "mcp_url": "http://localhost:8001"
+      }
+    },
+    {
+      "_id": "fld_trigger",
+      "_type": "request_group",
+      "parentId": "wrk_email_test",
+      "name": "1. Trigger Email Notifications"
+    },
+    {
+      "_id": "req_brute_force_1",
+      "_type": "request",
+      "parentId": "fld_trigger",
+      "name": "Brute Force - Attempt 1",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 999,\n  \"username\": \"test.user@example.com\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.1\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T12:00:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_brute_force_2",
+      "_type": "request",
+      "parentId": "fld_trigger",
+      "name": "Brute Force - Attempt 2",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 999,\n  \"username\": \"test.user@example.com\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.2\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T12:01:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_brute_force_3",
+      "_type": "request",
+      "parentId": "fld_trigger",
+      "name": "Brute Force - Attempt 3 (Triggers Email)",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 999,\n  \"username\": \"test.user@example.com\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.3\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T12:02:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_2fa_failure_1",
+      "_type": "request",
+      "parentId": "fld_trigger",
+      "name": "2FA Failure - Attempt 1",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 888,\n  \"username\": \"another.user@example.com\",\n  \"event_type\": \"2fa_failure\",\n  \"ip_address\": \"192.168.1.100\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T13:00:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_2fa_failure_2",
+      "_type": "request",
+      "parentId": "fld_trigger",
+      "name": "2FA Failure - Attempt 2",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 888,\n  \"username\": \"another.user@example.com\",\n  \"event_type\": \"2fa_failure\",\n  \"ip_address\": \"192.168.1.100\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T13:01:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_2fa_failure_3",
+      "_type": "request",
+      "parentId": "fld_trigger",
+      "name": "2FA Failure - Attempt 3 (Triggers Email)",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 888,\n  \"username\": \"another.user@example.com\",\n  \"event_type\": \"2fa_failure\",\n  \"ip_address\": \"192.168.1.100\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T13:02:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_verify",
+      "_type": "request_group",
+      "parentId": "wrk_email_test",
+      "name": "2. Verify Email Notifications"
+    },
+    {
+      "_id": "req_check_fraud",
+      "_type": "request",
+      "parentId": "fld_verify",
+      "name": "Check Fraud Assessments",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/fraud-assessments?user_id=999"
+    },
+    {
+      "_id": "req_check_high_risk",
+      "_type": "request",
+      "parentId": "fld_verify",
+      "name": "Check High Risk Events (Email Triggers)",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/fraud-assessments?min_risk_score=0.7"
+    },
+    {
+      "_id": "req_check_events",
+      "_type": "request",
+      "parentId": "fld_verify",
+      "name": "Check Events for User",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/events?user_id=999"
+    },
+    {
+      "_id": "fld_normal",
+      "_type": "request_group",
+      "parentId": "wrk_email_test",
+      "name": "3. Normal Activity (No Email)"
+    },
+    {
+      "_id": "req_normal_login",
+      "_type": "request",
+      "parentId": "fld_normal",
+      "name": "Normal Login (No Email)",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 123,\n  \"username\": \"normal.user@example.com\",\n  \"event_type\": \"login_success\",\n  \"ip_address\": \"192.168.1.100\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T14:00:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_check_normal",
+      "_type": "request",
+      "parentId": "fld_normal",
+      "name": "Verify No Email for Normal User",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/fraud-assessments?user_id=123"
+    }
+  ]
+}

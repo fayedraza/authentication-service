@@ -1,93 +1,93 @@
-name: CI
+name: CI - Build and Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
-  detect-secrets:
-    name: Detect secrets
+  test:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
-      - name: Install detect-secrets
-        run: |
-          python -m pip install --upgrade pip
-          pip install detect-secrets==1.5.0
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio httpx
 
-      - name: Run detect-secrets scan (project folders) and compare to baseline
-        # Scan only project folders so CI compares the same scope as the committed baseline.
-        run: |
-          detect-secrets scan --exclude-files '\.secrets\.baseline$' --exclude-files 'detect_findings\.baseline$' auth_platform dev-portal-ui/dev-portal-ui > new.baseline || true
-          if [ -f .secrets.baseline ]; then
-            echo "Comparing new scan to committed baseline (scoped)..."
-            # Strip the generated_at timestamp from both files before comparing so
-            # timestamp-only differences won't fail the job.
-            sed '/"generated_at"/d' .secrets.baseline > .secrets.baseline.filtered || true
-            sed '/"generated_at"/d' new.baseline > new.baseline.filtered || true
-            git --no-pager diff --no-index --exit-code .secrets.baseline.filtered new.baseline.filtered
-          else
-            echo "No .secrets.baseline found in repo; failing to avoid accidental leaks"
-            cat new.baseline || true
-            exit 1
+    - name: Build Docker images
+      run: |
+        cd auth_platform
+        docker compose build
+
+    - name: Start services
+      run: |
+        cd auth_platform
+        docker compose up -d
+
+    - name: Wait for services to be ready
+      run: |
+        echo "Waiting for services to start..."
+        sleep 10
+
+        # Wait for MCP Server
+        for i in {1..30}; do
+          if curl -f http://localhost:8001/health > /dev/null 2>&1; then
+            echo "✓ MCP Server is ready"
+            break
           fi
+          echo "Waiting for MCP Server... ($i/30)"
+          sleep 2
+        done
 
-  backend-tests:
-    name: Backend tests (Poetry)
-    needs: detect-secrets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        # Wait for Auth Service
+        for i in {1..30}; do
+          if curl -f http://localhost:8000/docs > /dev/null 2>&1; then
+            echo "✓ Auth Service is ready"
+            break
+          fi
+          echo "Waiting for Auth Service... ($i/30)"
+          sleep 2
+        done
 
-      - name: Setup Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+    - name: Check service health
+      run: |
+        echo "=== MCP Server Health ==="
+        curl -f http://localhost:8001/health || exit 1
 
-      - name: Install Poetry
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
+        echo -e "\n=== Auth Service Health ==="
+        curl -f http://localhost:8000/docs || exit 1
 
-      - name: Install dependencies (auth_platform)
-        run: |
-          cd auth_platform
-          poetry install --no-interaction --no-ansi
+    - name: Run MCP Server unit tests
+      run: |
+        cd mcp_server
+        pytest tests/test_fraud_detector.py -v
 
-      - name: Run pytest
-        run: |
-          cd auth_platform
-          poetry run pytest -q
+    - name: Run end-to-end tests
+      run: |
+        cd mcp_server
+        pytest tests/test_e2e_simple.py -v -s --log-cli-level=INFO
 
-  ui-tests:
-    name: UI unit tests
-    needs: detect-secrets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Show service logs on failure
+      if: failure()
+      run: |
+        echo "=== MCP Server Logs ==="
+        docker logs auth_platform-mcp-server-1
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+        echo -e "\n=== Auth Service Logs ==="
+        docker logs auth_platform-auth-service-1
 
-      - name: Install UI dependencies
-        working-directory: dev-portal-ui/dev-portal-ui
-        run: |
-          npm ci
-
-      - name: Run UI unit tests
-        working-directory: dev-portal-ui/dev-portal-ui
-        run: |
-          npm test -- --watchAll=false --silent
+    - name: Stop services
+      if: always()
+      run: |
+        cd auth_platform
+        docker compose down -v

@@ -1,0 +1,417 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-11-30T08:30:00.000Z",
+  "__export_source": "complete-auth-mcp-flow:v1.0.0",
+  "resources": [
+    {
+      "_id": "wrk_complete",
+      "_type": "workspace",
+      "name": "Complete Auth + MCP Platform",
+      "description": "End-to-end testing: Auth Service + MCP Server"
+    },
+    {
+      "_id": "env_complete",
+      "_type": "environment",
+      "parentId": "wrk_complete",
+      "name": "Base Environment",
+      "data": {
+        "auth_url": "http://localhost:8000",
+        "mcp_url": "http://localhost:8001",
+        "jwt_token": "PASTE_TOKEN_HERE"
+      }
+    },
+    {
+      "_id": "fld_auth_register",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "1. Auth - Registration"
+    },
+    {
+      "_id": "req_register",
+      "_type": "request",
+      "parentId": "fld_auth_register",
+      "name": "Register New User",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"testuser\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"tier\": \"dev\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_auth_login",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "2. Auth - Login Flow"
+    },
+    {
+      "_id": "req_login_step1",
+      "_type": "request",
+      "parentId": "fld_auth_login",
+      "name": "Login Step 1 (Password)",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"testuser\",\n  \"password\": \"SecurePass123!\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_login_step2_bypass",
+      "_type": "request",
+      "parentId": "fld_auth_login",
+      "name": "Login Step 2 (2FA Bypass)",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/2fa/verify",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"testuser\",\n  \"code\": \"000000\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_login_failed",
+      "_type": "request",
+      "parentId": "fld_auth_login",
+      "name": "Failed Login (Wrong Password)",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"testuser\",\n  \"password\": \"WrongPassword\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_auth_2fa",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "3. Auth - 2FA Management"
+    },
+    {
+      "_id": "req_2fa_status",
+      "_type": "request",
+      "parentId": "fld_auth_2fa",
+      "name": "Get 2FA Status",
+      "method": "GET",
+      "url": "{{ _.auth_url }}/2fa/status",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ _.jwt_token }}" }
+      ]
+    },
+    {
+      "_id": "req_2fa_enroll",
+      "_type": "request",
+      "parentId": "fld_auth_2fa",
+      "name": "Enroll in 2FA",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/2fa/enroll",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"testuser\",\n  \"password\": \"SecurePass123!\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_auth_password",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "4. Auth - Password Reset"
+    },
+    {
+      "_id": "req_password_reset_request",
+      "_type": "request",
+      "parentId": "fld_auth_password",
+      "name": "Request Password Reset",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/password-reset/request",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"test@example.com\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_password_reset_confirm",
+      "_type": "request",
+      "parentId": "fld_auth_password",
+      "name": "Confirm Password Reset",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/password-reset/confirm",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"token\": \"PASTE_TOKEN_FROM_LOGS\",\n  \"new_password\": \"NewSecurePass123!\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_auth_logs",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "5. Auth - Event Logs"
+    },
+    {
+      "_id": "req_event_logs_all",
+      "_type": "request",
+      "parentId": "fld_auth_logs",
+      "name": "Get All Event Logs",
+      "method": "GET",
+      "url": "{{ _.auth_url }}/dev/event-logs?limit=20"
+    },
+    {
+      "_id": "req_event_logs_filtered",
+      "_type": "request",
+      "parentId": "fld_auth_logs",
+      "name": "Get Event Logs (Filtered)",
+      "method": "GET",
+      "url": "{{ _.auth_url }}/dev/event-logs?event_type=login_success&limit=10"
+    }
+,
+    {
+      "_id": "fld_mcp_health",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "6. MCP - Health Checks"
+    },
+    {
+      "_id": "req_mcp_health",
+      "_type": "request",
+      "parentId": "fld_mcp_health",
+      "name": "MCP Health Check",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/health"
+    },
+    {
+      "_id": "req_mcp_ready",
+      "_type": "request",
+      "parentId": "fld_mcp_health",
+      "name": "MCP Readiness Check",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/ready"
+    },
+    {
+      "_id": "fld_mcp_ingest",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "7. MCP - Event Ingestion"
+    },
+    {
+      "_id": "req_mcp_ingest_success",
+      "_type": "request",
+      "parentId": "fld_mcp_ingest",
+      "name": "Ingest Login Success",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 123,\n  \"username\": \"john.doe\",\n  \"event_type\": \"login_success\",\n  \"ip_address\": \"192.168.1.100\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_mcp_ingest_failure",
+      "_type": "request",
+      "parentId": "fld_mcp_ingest",
+      "name": "Ingest Login Failure",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 456,\n  \"username\": \"suspicious.user\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.1\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T10:35:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_mcp_ingest_2fa_failure",
+      "_type": "request",
+      "parentId": "fld_mcp_ingest",
+      "name": "Ingest 2FA Failure",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 789,\n  \"username\": \"test.user\",\n  \"event_type\": \"2fa_failure\",\n  \"ip_address\": \"192.168.1.50\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T10:40:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_mcp_events",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "8. MCP - Event Queries"
+    },
+    {
+      "_id": "req_mcp_events_all",
+      "_type": "request",
+      "parentId": "fld_mcp_events",
+      "name": "Get All Events",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/events"
+    },
+    {
+      "_id": "req_mcp_events_user",
+      "_type": "request",
+      "parentId": "fld_mcp_events",
+      "name": "Get Events by User",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/events?user_id=123"
+    },
+    {
+      "_id": "req_mcp_events_type",
+      "_type": "request",
+      "parentId": "fld_mcp_events",
+      "name": "Get Events by Type",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/events?event_type=login_failure"
+    },
+    {
+      "_id": "fld_mcp_fraud",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "9. MCP - Fraud Detection"
+    },
+    {
+      "_id": "req_mcp_fraud_all",
+      "_type": "request",
+      "parentId": "fld_mcp_fraud",
+      "name": "Get All Fraud Assessments",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/fraud-assessments"
+    },
+    {
+      "_id": "req_mcp_fraud_high",
+      "_type": "request",
+      "parentId": "fld_mcp_fraud",
+      "name": "Get High Risk Events",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/fraud-assessments?min_risk_score=0.7"
+    },
+    {
+      "_id": "req_mcp_fraud_user",
+      "_type": "request",
+      "parentId": "fld_mcp_fraud",
+      "name": "Get Fraud by User",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/fraud-assessments?user_id=456"
+    },
+    {
+      "_id": "fld_mcp_alerts",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "10. MCP - Alert Management"
+    },
+    {
+      "_id": "req_mcp_alerts_all",
+      "_type": "request",
+      "parentId": "fld_mcp_alerts",
+      "name": "Get All Alerts",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/alerts"
+    },
+    {
+      "_id": "req_mcp_alerts_open",
+      "_type": "request",
+      "parentId": "fld_mcp_alerts",
+      "name": "Get Open Alerts",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/alerts?status=open"
+    },
+    {
+      "_id": "req_mcp_alerts_high_risk",
+      "_type": "request",
+      "parentId": "fld_mcp_alerts",
+      "name": "Get High Risk Alerts",
+      "method": "GET",
+      "url": "{{ _.mcp_url }}/mcp/alerts?min_risk_score=0.8&status=open"
+    },
+    {
+      "_id": "req_mcp_alert_update",
+      "_type": "request",
+      "parentId": "fld_mcp_alerts",
+      "name": "Update Alert Status",
+      "method": "PATCH",
+      "url": "{{ _.mcp_url }}/mcp/alerts/ALERT_ID_HERE",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"reviewed\"\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "fld_test_scenarios",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "11. Test Scenarios"
+    },
+    {
+      "_id": "req_scenario_brute_force_1",
+      "_type": "request",
+      "parentId": "fld_test_scenarios",
+      "name": "Brute Force Attack (1/3)",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 999,\n  \"username\": \"attack.target\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.1\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T12:00:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_scenario_brute_force_2",
+      "_type": "request",
+      "parentId": "fld_test_scenarios",
+      "name": "Brute Force Attack (2/3)",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 999,\n  \"username\": \"attack.target\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.2\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T12:01:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "_id": "req_scenario_brute_force_3",
+      "_type": "request",
+      "parentId": "fld_test_scenarios",
+      "name": "Brute Force Attack (3/3)",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 999,\n  \"username\": \"attack.target\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.3\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T12:02:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ]
+    }
+  ]
+}
