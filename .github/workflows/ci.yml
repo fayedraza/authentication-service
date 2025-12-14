@@ -22,8 +22,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r mcp_server/requirements-test.txt
-        pip install -r mcp_server/requirements.txt
+        cd mcp_server
+        pip install -e .[test]
 
     - name: Build Docker images
       run: |
@@ -71,12 +71,12 @@ jobs:
     - name: Run MCP Server unit tests
       run: |
         cd mcp_server
-        pytest tests/test_fraud_detector.py -v
+        pytest tests/unit/test_fraud_detector.py -v
 
     - name: Run end-to-end tests
       run: |
         cd mcp_server
-        pytest tests/test_e2e_simple.py -v -s --log-cli-level=INFO
+        pytest tests/e2e/test_e2e_simple.py -v -s --log-cli-level=INFO
 
     - name: Show service logs on failure
       if: failure()
