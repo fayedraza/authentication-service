@@ -8,9 +8,9 @@ from datetime import datetime
 from typing import Optional
 import logging
 
-from schemas import EventListResponse, AuthEventOut, ErrorResponse
-from models import MCPAuthEvent
-from db import get_db
+from mcp_server.schemas import EventListResponse, AuthEventOut, ErrorResponse
+from mcp_server.models import MCPAuthEvent
+from mcp_server.db import get_db
 
 logger = logging.getLogger(__name__)
 

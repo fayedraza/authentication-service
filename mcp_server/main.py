@@ -6,9 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from config import settings
-from db import init_db
-from routes import ingest, events, fraud_assessments, health
+from mcp_server.config import settings
+from mcp_server.db import init_db
+from mcp_server.routes import ingest, events, fraud_assessments, health
 
 # Configure logging
 logging.basicConfig(

@@ -11,15 +11,15 @@ from typing import Optional, List
 from datetime import datetime, timedelta
 import uuid
 
-from db import get_db
-from models import MCPAlert, MCPAuthEvent
-from schemas import (
+from mcp_server.db import get_db
+from mcp_server.models import MCPAlert, MCPAuthEvent
+from mcp_server.schemas import (
     AlertOut,
     AlertListResponse,
     AlertStatusUpdate,
     AlertCreateResponse
 )
-from config import settings
+from mcp_server.config import settings
 
 
 router = APIRouter(prefix="/mcp/alerts", tags=["alerts"])

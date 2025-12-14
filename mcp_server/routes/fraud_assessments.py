@@ -8,16 +8,16 @@ from datetime import datetime
 from typing import Optional
 import logging
 
-from schemas import (
+from mcp_server.schemas import (
     FraudAssessmentListResponse,
     FraudAssessmentOut,
     FraudStatistics,
     AuthEventOut,
     ErrorResponse
 )
-from models import MCPAuthEvent
-from db import get_db
-from config import settings
+from mcp_server.models import MCPAuthEvent
+from mcp_server.db import get_db
+from mcp_server.config import settings
 
 logger = logging.getLogger(__name__)
 

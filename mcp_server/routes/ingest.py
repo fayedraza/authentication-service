@@ -7,11 +7,11 @@ from datetime import datetime
 import logging
 import uuid
 
-from schemas import AuthEventIn, EventIngestResponse, ErrorResponse
-from models import MCPAuthEvent
-from db import get_db
-from fraud_detector import FraudDetector
-from config import settings
+from mcp_server.schemas import AuthEventIn, EventIngestResponse, ErrorResponse
+from mcp_server.models import MCPAuthEvent
+from mcp_server.db import get_db
+from mcp_server.fraud_detector import FraudDetector
+from mcp_server.config import settings
 
 logger = logging.getLogger(__name__)
 

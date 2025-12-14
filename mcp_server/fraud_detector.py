@@ -15,9 +15,9 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 import logging
 
-from models import MCPAuthEvent
-from schemas import AuthEventIn
-from baml_client import get_baml_client, LoginEvent as BAMLLoginEvent
+from mcp_server.models import MCPAuthEvent
+from mcp_server.schemas import AuthEventIn
+from mcp_server.baml_client import get_baml_client, LoginEvent as BAMLLoginEvent
 
 logger = logging.getLogger(__name__)
 

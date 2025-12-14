@@ -5,8 +5,8 @@ from fastapi import APIRouter, status
 from datetime import datetime
 from typing import Dict, Any
 
-from db import check_db_connection
-from config import settings
+from mcp_server.db import check_db_connection
+from mcp_server.config import settings
 
 router = APIRouter(tags=["health"])
 
