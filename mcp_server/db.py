@@ -48,7 +48,7 @@ def init_db() -> None:
     """
     try:
         # Import models to ensure they are registered with Base
-        from models import MCPAuthEvent, MCPAlert
+        from mcp_server.models import MCPAuthEvent, MCPAlert
 
         # Create all tables
         Base.metadata.create_all(bind=engine)
