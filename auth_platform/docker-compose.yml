@@ -19,11 +19,13 @@ services:
       - mcp-server
 
   mcp-server:
-    build: ../mcp_server
+    build:
+      context: ../mcp_server
+      target: development
     ports:
       - "8001:8001"
     volumes:
-      - ../mcp_server:/app
+      - ../mcp_server:/workspace/mcp_server
     environment:
       - MCP_PORT=8001
       - LOG_LEVEL=INFO
@@ -34,3 +36,16 @@ services:
       - BAML_ENABLED=false
       - ALERT_CONSOLIDATION_WINDOW_MINUTES=5
       - MAX_EVENTS_PER_ALERT=10
+
+  # Test service for running unit tests
+  mcp-server-tests:
+    build:
+      context: ../mcp_server
+      target: test
+    volumes:
+      - ../mcp_server:/workspace/mcp_server
+    environment:
+      - PYTHONPATH=/workspace
+    profiles:
+      - test
+    command: ["python", "-m", "pytest", "mcp_server/tests/unit/", "-v"]
