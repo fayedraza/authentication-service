@@ -23,7 +23,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-asyncio httpx
+          cd mcp_server
+          pip install -e .[test]
+          pip install httpx
 
       - name: Start Docker Compose services
         run: |
@@ -45,16 +47,19 @@ jobs:
       - name: Run E2E tests
         run: |
           cd mcp_server
-          pytest tests/test_e2e_ci.py -v -s --log-cli-level=INFO
+          pytest tests/e2e/test_e2e_ci.py -v -s --log-cli-level=INFO
 
-      - name: Show MCP Server logs on failure
+      - name: Show container logs on failure
         if: failure()
         run: |
+          echo "=== Available Containers ==="
+          docker ps -a
+          echo ""
           echo "=== MCP Server Logs ==="
-          docker logs auth_platform-mcp-server-1
+          docker logs $(docker ps -aq --filter "name=mcp-server") || echo "MCP Server container not found"
           echo ""
           echo "=== Auth Service Logs ==="
-          docker logs auth_platform-auth-service-1
+          docker logs $(docker ps -aq --filter "name=auth-service") || echo "Auth Service container not found"
 
       - name: Stop Docker Compose services
         if: always()

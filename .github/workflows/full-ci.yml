@@ -106,7 +106,7 @@ jobs:
           fi
           if [ $i -eq 30 ]; then
             echo "❌ MCP Server failed to start"
-            docker logs auth_platform-mcp-server-1
+            docker logs $(docker ps -aq --filter "name=mcp-server") || echo "MCP Server container not found"
             exit 1
           fi
           echo "Waiting for MCP Server... ($i/30)"
@@ -121,7 +121,7 @@ jobs:
           fi
           if [ $i -eq 30 ]; then
             echo "❌ Auth Service failed to start"
-            docker logs auth_platform-auth-service-1
+            docker logs $(docker ps -aq --filter "name=auth-service") || echo "Auth Service container not found"
             exit 1
           fi
           echo "Waiting for Auth Service... ($i/30)"
@@ -166,7 +166,7 @@ jobs:
         sleep 3
 
         # Check logs for email notification
-        docker logs auth_platform-mcp-server-1 2>&1 | grep "📧 EMAIL NOTIFICATION TRIGGER" && \
+        docker logs $(docker ps -aq --filter "name=mcp-server") 2>&1 | grep "📧 EMAIL NOTIFICATION TRIGGER" && \
           echo "✓ Email notification logging verified" || \
           (echo "❌ Email notification not found in logs" && exit 1)
 
@@ -174,10 +174,10 @@ jobs:
       if: failure()
       run: |
         echo "=== MCP Server Logs ==="
-        docker logs auth_platform-mcp-server-1 2>&1 | tail -100
+        docker logs $(docker ps -aq --filter "name=mcp-server") 2>&1 | tail -100 || echo "MCP Server container not found"
 
         echo -e "\n=== Auth Service Logs ==="
-        docker logs auth_platform-auth-service-1 2>&1 | tail -100
+        docker logs $(docker ps -aq --filter "name=auth-service") 2>&1 | tail -100 || echo "Auth Service container not found"
 
     - name: Stop services
       if: always()
