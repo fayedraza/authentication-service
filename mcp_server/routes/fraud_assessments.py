@@ -181,7 +181,7 @@ async def get_fraud_assessments(
             assessment = FraudAssessmentOut(
                 event=event_out,
                 risk_score=event.risk_score,
-                email_notification=event.risk_score > settings.FRAUD_THRESHOLD if event.risk_score else False,
+                email_notification=event.risk_score >= settings.FRAUD_THRESHOLD if event.risk_score else False,
                 reason=event.fraud_reason or "No analysis reason provided",
                 analyzed_at=event.analyzed_at.isoformat() + 'Z' if event.analyzed_at else None
             )
