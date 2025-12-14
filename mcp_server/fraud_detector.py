@@ -331,6 +331,9 @@ class FraudDetector:
         # Determine if email notification should be sent
         email_notification = risk_score >= self.fraud_threshold
 
+        # Debug logging for threshold comparison
+        logger.info(f"Risk score: {risk_score}, Threshold: {self.fraud_threshold}, Email notification: {email_notification}")
+
         # Build reason string
         if reasons:
             reason = "; ".join(reasons)
