@@ -270,7 +270,7 @@ async def test_low_risk_no_email_notification(check_services):
     """
     timestamp = int(time.time())
     username = f"normal_user_{timestamp}"
-    password = "TestPassword123!"
+    password = "TestPassword123!"  # pragma: allowlist secret
 
     async with httpx.AsyncClient(timeout=30.0) as client:
 

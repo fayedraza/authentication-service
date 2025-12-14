@@ -184,7 +184,7 @@ async def test_normal_login_no_email(check_services):
     """
     timestamp = int(time.time())
     username = f"normal_{timestamp}"
-    password = "SecurePass123!"
+    password = "SecurePass123!"  # pragma: allowlist secret
 
     async with httpx.AsyncClient(timeout=30.0) as client:
 

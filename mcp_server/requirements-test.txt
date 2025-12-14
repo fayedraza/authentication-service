@@ -1,8 +1,0 @@
-# Include main application dependencies
--r requirements.txt
-
-# Test-specific dependencies
-pytest==7.4.4
-pytest-asyncio==0.21.1
-pydantic==2.8.2
-pydantic-settings==2.4.0
