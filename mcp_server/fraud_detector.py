@@ -291,6 +291,7 @@ class FraudDetector:
             since=event_time - timedelta(minutes=5),
             before=event_time
         )
+
         if failed_2fa >= 11:
             risk_score += 0.8
             reasons.append(f"Severe 2FA brute force attack ({failed_2fa} failed attempts in 5 minutes)")
@@ -374,6 +375,7 @@ class FraudDetector:
                 MCPAuthEvent.timestamp >= since,
                 MCPAuthEvent.timestamp < before
             ).count()
+
             return count
         except Exception as e:
             logger.error(f"Error counting recent events: {e}")

@@ -4,15 +4,16 @@ Test script for fraud detection engine (Task 5)
 import sys
 from datetime import datetime, timedelta
 import uuid
+import pytest
 
 sys.path.insert(0, '.')
 
 from fastapi.testclient import TestClient
 from mcp_server.main import app
-from mcp_server.db import SessionLocal
 from mcp_server.models import MCPAuthEvent
 from mcp_server.fraud_detector import FraudDetector, FraudAssessment
 from mcp_server.schemas import AuthEventIn
+from mcp_server.db import SessionLocal
 
 client = TestClient(app)
 
@@ -77,11 +78,11 @@ def test_fraud_detector_initialization():
     print("  Verified: FraudDetector initializes with custom threshold")
 
 
-def test_rule_multiple_failed_logins():
+def test_rule_multiple_failed_logins(db_session):
     """Test Rule: Multiple failed login attempts (3+ in 5 minutes): +0.3"""
     print("\n✓ Test Rule: Multiple Failed Login Attempts")
 
-    db = SessionLocal()
+    db = db_session
     detector = FraudDetector(fraud_threshold=0.7)
 
     user_id = 5001
@@ -118,15 +119,14 @@ def test_rule_multiple_failed_logins():
     assert assessment.risk_score >= 0.3, f"Risk score should be at least 0.3, got {assessment.risk_score}"
     assert "failed login attempts" in assessment.reason.lower()
 
-    db.close()
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_rule_multiple_failed_2fa():
+def test_rule_multiple_failed_2fa(db_session):
     """Test Rule: Multiple failed 2FA attempts (3+ in 5 minutes): +0.4"""
     print("\n✓ Test Rule: Multiple Failed 2FA Attempts")
 
-    db = SessionLocal()
+    db = db_session
     detector = FraudDetector(fraud_threshold=0.7)
 
     user_id = 5002
@@ -141,7 +141,7 @@ def test_rule_multiple_failed_2fa():
             event_type="2fa_failure",
             ip_address="192.168.1.100",
             user_agent="Mozilla/5.0",
-            timestamp=base_time - timedelta(minutes=i),
+            timestamp=base_time - timedelta(minutes=i+1),  # Start from 1 minute ago
             event_metadata={}
         )
         db.add(event)
@@ -163,15 +163,14 @@ def test_rule_multiple_failed_2fa():
     assert assessment.risk_score >= 0.4, f"Risk score should be at least 0.4, got {assessment.risk_score}"
     assert "2fa" in assessment.reason.lower()
 
-    db.close()
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_rule_ip_address_change():
+def test_rule_ip_address_change(db_session):
     """Test Rule: IP address change from previous login: +0.2"""
     print("\n✓ Test Rule: IP Address Change")
 
-    db = SessionLocal()
+    db = db_session
     detector = FraudDetector(fraud_threshold=0.7)
 
     user_id = 5003
@@ -207,15 +206,14 @@ def test_rule_ip_address_change():
     assert assessment.risk_score >= 0.2, f"Risk score should be at least 0.2, got {assessment.risk_score}"
     assert "ip address changed" in assessment.reason.lower()
 
-    db.close()
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_rule_user_agent_change():
+def test_rule_user_agent_change(db_session):
     """Test Rule: User agent change from previous login: +0.1"""
     print("\n✓ Test Rule: User Agent Change")
 
-    db = SessionLocal()
+    db = db_session
     detector = FraudDetector(fraud_threshold=0.7)
 
     user_id = 5004
@@ -251,15 +249,14 @@ def test_rule_user_agent_change():
     assert assessment.risk_score >= 0.1, f"Risk score should be at least 0.1, got {assessment.risk_score}"
     assert "user agent changed" in assessment.reason.lower()
 
-    db.close()
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_combined_rules():
+def test_combined_rules(db_session):
     """Test multiple rules triggering together"""
     print("\n✓ Test Combined Rules")
 
-    db = SessionLocal()
+    db = db_session
     detector = FraudDetector(fraud_threshold=0.7)
 
     user_id = 5005
@@ -313,15 +310,14 @@ def test_combined_rules():
     assert "ip address" in assessment.reason.lower()
     assert "user agent" in assessment.reason.lower()
 
-    db.close()
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_alert_threshold():
+def test_alert_threshold(db_session):
     """Test that alert flag is set when risk_score >= threshold"""
     print("\n✓ Test Alert Threshold")
 
-    db = SessionLocal()
+    db = db_session
     detector = FraudDetector(fraud_threshold=0.7)
 
     user_id = 5006
@@ -350,7 +346,7 @@ def test_alert_threshold():
             event_type="login_failure",
             ip_address="10.0.0.50",
             user_agent="Chrome/91.0",
-            timestamp=base_time - timedelta(minutes=i),
+            timestamp=base_time - timedelta(minutes=i+1),  # Start from 1 minute ago
             event_metadata={}
         )
         db.add(event)
@@ -364,7 +360,7 @@ def test_alert_threshold():
             event_type="2fa_failure",
             ip_address="10.0.0.50",
             user_agent="Chrome/91.0",
-            timestamp=base_time - timedelta(minutes=i),
+            timestamp=base_time - timedelta(minutes=i+1),  # Start from 1 minute ago
             event_metadata={}
         )
         db.add(event)
@@ -388,11 +384,10 @@ def test_alert_threshold():
     assert assessment.risk_score >= 0.7, f"Risk score should be >= 0.7, got {assessment.risk_score}"
     assert assessment.email_notification is True, "Email notification should be True for high risk score"
 
-    db.close()
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Email notification = {assessment.email_notification}")
 
 
-def test_event_persistence_with_fraud_analysis():
+def test_event_persistence_with_fraud_analysis(db_session, test_client):
     """Test that events are updated with fraud analysis results"""
     print("\n✓ Test Event Persistence with Fraud Analysis")
 
@@ -410,29 +405,35 @@ def test_event_persistence_with_fraud_analysis():
         "metadata": {}
     }
 
-    response = client.post("/mcp/ingest", json=event_data)
+    response = test_client.post("/mcp/ingest", json=event_data)
     assert response.status_code == 201
 
     event_id = response.json()["event_id"]
 
     # Query database to verify fraud analysis was performed
-    db = SessionLocal()
-    stored_event = db.query(MCPAuthEvent).filter(MCPAuthEvent.id == event_id).first()
+    # Use a fresh session to see committed changes
+    fresh_session = SessionLocal()
+    try:
+        stored_event = fresh_session.query(MCPAuthEvent).filter(MCPAuthEvent.id == event_id).first()
 
-    assert stored_event is not None
+        assert stored_event is not None
+        assert stored_event.risk_score is not None, "Risk score should be set"
+        assert stored_event.fraud_reason is not None, "Fraud reason should be set"
+        assert stored_event.analyzed_at is not None, "Analyzed timestamp should be set"
+    finally:
+        fresh_session.close()
     assert stored_event.risk_score is not None, "Risk score should be set"
     assert stored_event.fraud_reason is not None, "Fraud reason should be set"
     assert stored_event.analyzed_at is not None, "Analyzed timestamp should be set"
 
-    db.close()
     print(f"  Verified: Event stored with risk_score={stored_event.risk_score:.2f}, reason='{stored_event.fraud_reason}'")
 
 
-def test_normal_authentication_pattern():
+def test_normal_authentication_pattern(db_session):
     """Test that normal authentication has low risk score"""
     print("\n✓ Test Normal Authentication Pattern")
 
-    db = SessionLocal()
+    db = db_session
     detector = FraudDetector(fraud_threshold=0.7)
 
     user_id = 5008
@@ -469,7 +470,6 @@ def test_normal_authentication_pattern():
     assert assessment.email_notification is False, "Email notification should be False for normal pattern"
     assert "normal" in assessment.reason.lower()
 
-    db.close()
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Email notification = {assessment.email_notification}")
 
 

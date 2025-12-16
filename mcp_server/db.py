@@ -13,13 +13,19 @@ from mcp_server.models import MCPAuthEvent, MCPAlert
 logger = logging.getLogger(__name__)
 
 # Create SQLAlchemy engine
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
-    pool_size=settings.DB_POOL_SIZE,
-    max_overflow=settings.DB_MAX_OVERFLOW,
-    echo=settings.LOG_LEVEL == "DEBUG"
-)
+if "sqlite" in settings.DATABASE_URL:
+    engine = create_engine(
+        settings.DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        echo=settings.LOG_LEVEL == "DEBUG"
+    )
+else:
+    engine = create_engine(
+        settings.DATABASE_URL,
+        pool_size=settings.DB_POOL_SIZE,
+        max_overflow=settings.DB_MAX_OVERFLOW,
+        echo=settings.LOG_LEVEL == "DEBUG"
+    )
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -18,18 +18,21 @@ from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+# Set test database URL and lower fraud threshold before importing anything
+import os
+os.environ["DATABASE_URL"] = "sqlite:///test_integration.db"
+os.environ["FRAUD_THRESHOLD"] = "0.3"  # Lower threshold for testing
+
 from mcp_server.base import Base
-from mcp_server.db import get_db
+from mcp_server.db import get_db, engine, SessionLocal
 from mcp_server.config import settings
 from mcp_server.models import MCPAuthEvent, MCPAlert
 
-# Create test database
-TEST_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create tables
+# Create tables in test database
 Base.metadata.create_all(bind=engine)
+
+# Use the same SessionLocal that the app uses
+TestingSessionLocal = SessionLocal
 
 
 def override_get_db():
@@ -324,8 +327,9 @@ def test_alert_consolidation_multiple_events(clean_db):
     user_id = 300
     base_time = datetime.utcnow()
 
-    # Create historical events to trigger high risk
-    for i in range(3):
+    # Create historical events to trigger high risk (within 5-minute window)
+    # Need 11+ failed attempts to get risk score >= 0.7
+    for i in range(11):
         failed_event = MCPAuthEvent(
             id=f"setup-300-{i}",
             user_id=user_id,
@@ -333,7 +337,7 @@ def test_alert_consolidation_multiple_events(clean_db):
             event_type="login_failure",
             ip_address="10.0.0.50",
             user_agent="Chrome/91.0",
-            timestamp=base_time - timedelta(minutes=10+i),
+            timestamp=base_time - timedelta(minutes=4, seconds=i*10),  # Spread over 4 minutes
             event_metadata={}
         )
         db.add(failed_event)
@@ -356,14 +360,14 @@ def test_alert_consolidation_multiple_events(clean_db):
     assert response1.status_code == 201
     event_id_1 = response1.json()["event_id"]
 
-    # Ingest second high-risk event within consolidation window
+    # Ingest second high-risk event within consolidation window (30 seconds later)
     event_data_2 = {
         "user_id": user_id,
         "username": "consolidation_user",
         "event_type": "login_failure",
         "ip_address": "10.0.0.51",
         "user_agent": "Chrome/91.0",
-        "timestamp": (base_time + timedelta(minutes=2)).isoformat() + "Z",
+        "timestamp": (base_time + timedelta(seconds=30)).isoformat() + "Z",
         "metadata": {}
     }
 

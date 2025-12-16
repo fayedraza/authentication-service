@@ -3,12 +3,12 @@ Event ingestion API endpoint for receiving authentication events from Auth Servi
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import uuid
 
 from mcp_server.schemas import AuthEventIn, EventIngestResponse, ErrorResponse
-from mcp_server.models import MCPAuthEvent
+from mcp_server.models import MCPAuthEvent, MCPAlert
 from mcp_server.db import get_db
 from mcp_server.fraud_detector import FraudDetector
 from mcp_server.config import settings
@@ -136,13 +136,62 @@ async def ingest_event(
                 f"risk_score={assessment.risk_score:.2f}"
             )
 
-            # Log high-risk events for future AI analysis
+            # Generate alert for high-risk events
             if assessment.risk_score >= settings.FRAUD_THRESHOLD:
                 logger.warning(
                     f"⚠️ HIGH RISK EVENT DETECTED: event_id={event_id}, "
                     f"user_id={event.user_id}, username={event.username}, "
                     f"risk_score={assessment.risk_score:.2f}, reason={assessment.reason}"
                 )
+
+                # Check for existing open alerts within consolidation window
+                consolidation_cutoff = datetime.utcnow() - timedelta(minutes=settings.ALERT_CONSOLIDATION_WINDOW_MINUTES)
+                existing_alert = db.query(MCPAlert).filter(
+                    MCPAlert.user_id == event.user_id,
+                    MCPAlert.status == "open",
+                    MCPAlert.created_at >= consolidation_cutoff
+                ).first()
+
+                if existing_alert:
+                    # Consolidate with existing alert
+                    import json
+                    logger.info(f"Found existing alert {existing_alert.id} with event_ids: {existing_alert.event_ids} (type: {type(existing_alert.event_ids)})")
+
+                    if isinstance(existing_alert.event_ids, list):
+                        existing_event_ids = existing_alert.event_ids
+                    elif isinstance(existing_alert.event_ids, str):
+                        existing_event_ids = json.loads(existing_alert.event_ids)
+                    else:
+                        existing_event_ids = []
+
+                    existing_event_ids.append(event_id)
+                    logger.info(f"Updated event_ids list: {existing_event_ids}")
+
+                    # Update alert with new event and higher risk score if applicable
+                    existing_alert.event_ids = existing_event_ids
+                    if assessment.risk_score > existing_alert.risk_score:
+                        existing_alert.risk_score = assessment.risk_score
+                        existing_alert.reason = assessment.reason
+                    existing_alert.updated_at = datetime.utcnow()
+
+                    logger.info(f"Consolidated event {event_id} into existing alert {existing_alert.id}, new event_ids: {existing_alert.event_ids}")
+                else:
+                    # Create new alert
+                    new_alert = MCPAlert(
+                        user_id=event.user_id,
+                        username=event.username,
+                        event_ids=[event_id],
+                        risk_score=assessment.risk_score,
+                        reason=assessment.reason,
+                        status="open",
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    db.add(new_alert)
+                    logger.info(f"Created new alert for high-risk event {event_id}")
+
+                db.commit()
+
                 logger.warning(
                     f"📧 EMAIL NOTIFICATION TRIGGER: Would send email to user {event.username} "
                     f"about suspicious activity. Risk: {assessment.risk_score:.2f} - {assessment.reason}"
