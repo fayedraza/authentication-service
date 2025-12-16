@@ -18,7 +18,8 @@ from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-from mcp_server.db import Base, get_db
+from mcp_server.base import Base
+from mcp_server.db import get_db
 from mcp_server.config import settings
 from mcp_server.models import MCPAuthEvent, MCPAlert
 

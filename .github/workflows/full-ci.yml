@@ -143,7 +143,7 @@ jobs:
     - name: Run integration tests
       run: |
         cd mcp_server
-        pytest tests/e2e/test_e2e_simple.py -v -s --log-cli-level=INFO
+        pytest tests/integration/ -v --tb=short --ignore=tests/integration/test_email_notification_integration.py
 
     - name: Test email notification logging
       run: |

@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from unittest.mock import Mock, patch
 
-from mcp_server.db import Base
+from mcp_server.base import Base
 from mcp_server.models import MCPAuthEvent
 from mcp_server.fraud_detector import FraudDetector, FraudAssessment
 from mcp_server.schemas import AuthEventIn

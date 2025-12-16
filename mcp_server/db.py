@@ -2,12 +2,13 @@
 Database connection and session management for MCP Server
 """
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 import logging
 
 from mcp_server.config import settings
+from mcp_server.base import Base
+from mcp_server.models import MCPAuthEvent, MCPAlert
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,6 @@ engine = create_engine(
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create Base class for models
-Base = declarative_base()
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -47,9 +45,7 @@ def init_db() -> None:
     Should be called on application startup.
     """
     try:
-        # Import models to ensure they are registered with Base
-        from mcp_server.models import MCPAuthEvent, MCPAlert
-
+        # Models are already imported at module level
         # Create all tables
         Base.metadata.create_all(bind=engine)
         logger.info("Database initialized successfully")

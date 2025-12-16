@@ -1,9 +1,10 @@
 """
-Manual test script for fraud assessment query endpoint
+Integration tests for fraud assessment query endpoint
 """
 import sys
 import json
 from datetime import datetime, timedelta
+import pytest
 
 # Add parent directory to path
 sys.path.insert(0, '.')
@@ -17,6 +18,7 @@ from mcp_server.models import MCPAuthEvent
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
 def setup_test_data():
     """Create test events with fraud analysis results in the database"""
     print("\n=== Setting up test data ===")
@@ -128,7 +130,14 @@ def setup_test_data():
     db.close()
 
     print(f"✓ Created {len(test_events)} test events (6 with fraud analysis, 1 without)")
-    return base_time
+
+    yield  # This makes it a fixture
+
+    # Cleanup after tests
+    db = SessionLocal()
+    db.query(MCPAuthEvent).delete()
+    db.commit()
+    db.close()
 
 
 def test_get_all_assessments():
@@ -335,7 +344,7 @@ def test_assessment_structure():
     assessment = data['assessments'][0]
     assert 'event' in assessment, "Assessment should contain event"
     assert 'risk_score' in assessment, "Assessment should contain risk_score"
-    assert 'alert_generated' in assessment, "Assessment should contain alert_generated"
+    assert 'email_notification' in assessment, "Assessment should contain email_notification"
     assert 'reason' in assessment, "Assessment should contain reason"
     assert 'analyzed_at' in assessment, "Assessment should contain analyzed_at"
 
@@ -347,11 +356,11 @@ def test_assessment_structure():
     assert 'event_type' in event, "Event should contain event_type"
     assert 'risk_score' in event, "Event should contain risk_score"
 
-    # Verify alert_generated logic
+    # Verify email_notification logic
     if assessment['risk_score'] > 0.7:
-        assert assessment['alert_generated'] is True, "High-risk events should have alert_generated=True"
+        assert assessment['email_notification'] is True, "High-risk events should have email_notification=True"
     else:
-        assert assessment['alert_generated'] is False, "Low/medium-risk events should have alert_generated=False"
+        assert assessment['email_notification'] is False, "Low/medium-risk events should have email_notification=False"
 
     print("✓ Test passed: Assessment structure is correct")
 

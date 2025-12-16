@@ -73,6 +73,11 @@ jobs:
         cd mcp_server
         pytest tests/unit/test_fraud_detector.py -v
 
+    - name: Run integration tests
+      run: |
+        cd mcp_server
+        pytest tests/integration/ -v --tb=short --ignore=tests/integration/test_email_notification_integration.py
+
     - name: Run end-to-end tests
       run: |
         cd mcp_server

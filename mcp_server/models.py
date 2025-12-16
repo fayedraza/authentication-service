@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, Integer, Float, DateTime, Text, JSON, Ind
 from datetime import datetime
 import uuid
 
-from mcp_server.db import Base
+from mcp_server.base import Base
 
 
 class MCPAuthEvent(Base):

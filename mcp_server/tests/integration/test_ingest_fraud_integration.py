@@ -9,12 +9,14 @@ This test verifies that task 9 is properly implemented:
 """
 import pytest
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 
-from mcp_server.main import app
-from mcp_server.db import Base, get_db
+from mcp_server.base import Base
+from mcp_server.db import get_db
 from mcp_server.models import MCPAuthEvent, MCPAlert
 from mcp_server.config import settings
 
@@ -36,8 +38,43 @@ def override_get_db():
         db.close()
 
 
-app.dependency_overrides[get_db] = override_get_db
-client = TestClient(app)
+# Create test app without lifespan (to avoid init_db on production database)
+@asynccontextmanager
+async def test_lifespan(app: FastAPI):
+    """Test lifespan - tables already created"""
+    yield
+
+
+# Import routes after database setup
+from mcp_server.routes import ingest, events, fraud_assessments, health
+from fastapi.middleware.cors import CORSMiddleware
+
+# Create test app
+test_app = FastAPI(
+    title="MCP Server Test",
+    description="Test instance of MCP Server",
+    version="1.0.0",
+    lifespan=test_lifespan
+)
+
+# Configure CORS
+test_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+test_app.include_router(ingest.router)
+test_app.include_router(events.router)
+test_app.include_router(fraud_assessments.router)
+test_app.include_router(health.router)
+
+# Override database dependency
+test_app.dependency_overrides[get_db] = override_get_db
+client = TestClient(test_app)
 
 
 def test_fraud_detection_integration_normal_event():

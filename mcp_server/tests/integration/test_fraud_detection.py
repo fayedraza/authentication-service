@@ -51,13 +51,13 @@ def test_fraud_assessment_model():
 
     assessment = FraudAssessment(
         risk_score=0.8,
-        alert=True,
+        email_notification=True,
         reason="Test reason",
         confidence=1.0
     )
 
     assert assessment.risk_score == 0.8
-    assert assessment.alert is True
+    assert assessment.email_notification is True
     assert assessment.reason == "Test reason"
     assert assessment.confidence == 1.0
 
@@ -386,10 +386,10 @@ def test_alert_threshold():
 
     # Should have: 0.3 (failed logins) + 0.4 (failed 2FA) + 0.2 (IP change) + 0.1 (UA change) = 1.0 (capped)
     assert assessment.risk_score >= 0.7, f"Risk score should be >= 0.7, got {assessment.risk_score}"
-    assert assessment.alert is True, "Alert should be True for high risk score"
+    assert assessment.email_notification is True, "Email notification should be True for high risk score"
 
     db.close()
-    print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Alert = {assessment.alert}")
+    print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Email notification = {assessment.email_notification}")
 
 
 def test_event_persistence_with_fraud_analysis():
@@ -466,11 +466,11 @@ def test_normal_authentication_pattern():
     assessment = detector.analyze_event(new_event, db)
 
     assert assessment.risk_score == 0.0, f"Risk score should be 0.0 for normal pattern, got {assessment.risk_score}"
-    assert assessment.alert is False, "Alert should be False for normal pattern"
+    assert assessment.email_notification is False, "Email notification should be False for normal pattern"
     assert "normal" in assessment.reason.lower()
 
     db.close()
-    print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Alert = {assessment.alert}")
+    print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Email notification = {assessment.email_notification}")
 
 
 if __name__ == "__main__":
