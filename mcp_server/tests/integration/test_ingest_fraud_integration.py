@@ -82,8 +82,8 @@ def test_fraud_detection_integration_high_risk_event(db_session, test_client):
     )
     db_session.add(prev_event)
 
-    # Create multiple failed login attempts
-    for i in range(4):
+    # Create multiple failed login attempts (6 to get 0.5 score)
+    for i in range(6):
         failed_event = MCPAuthEvent(
             id=f"failed-login-1002-{i}",
             user_id=user_id,
@@ -91,10 +91,24 @@ def test_fraud_detection_integration_high_risk_event(db_session, test_client):
             event_type="login_failure",
             ip_address="10.0.0.50",  # Different IP
             user_agent="Chrome/91.0",  # Different UA
-            timestamp=base_time - timedelta(minutes=4-i),
+            timestamp=base_time - timedelta(minutes=4, seconds=i*10),  # Spread within 4 minutes
             event_metadata={}
         )
         db_session.add(failed_event)
+
+    # Add some failed 2FA attempts (3 to get 0.4 score)
+    for i in range(3):
+        failed_2fa_event = MCPAuthEvent(
+            id=f"failed-2fa-1002-{i}",
+            user_id=user_id,
+            username="risky_user",
+            event_type="2fa_failure",
+            ip_address="10.0.0.50",
+            user_agent="Chrome/91.0",
+            timestamp=base_time - timedelta(minutes=3, seconds=i*10),
+            event_metadata={}
+        )
+        db_session.add(failed_2fa_event)
 
     db_session.commit()
 
