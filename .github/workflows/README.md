@@ -4,46 +4,35 @@ This directory contains automated workflows for continuous integration and deplo
 
 ## Workflows
 
-### 1. `ci.yml` - Basic CI Pipeline
-**Triggers:** Push and Pull Requests to `main` and `develop` branches
-
-**Steps:**
-1. Checkout code
-2. Set up Python environment
-3. Build Docker images
-4. Start services with Docker Compose
-5. Wait for services to be ready
-6. Run unit tests
-7. Run end-to-end tests
-8. Show logs on failure
-9. Clean up
-
-**Duration:** ~5-8 minutes
-
-### 2. `full-ci.yml` - Comprehensive CI Pipeline
+### `ci.yml` - Full CI Pipeline
 **Triggers:** Push and Pull Requests to `main` and `develop` branches
 
 **Jobs:**
 
-#### Lint Job
-- Code formatting check (Black)
-- Import sorting check (isort)
-- Linting (Flake8)
-- Security scanning (Bandit)
+#### Lint and Security Checks Job
+- **Secret Detection**: Uses `detect-secrets` to scan for new secrets against baseline
+- **Code Formatting**: Black formatting check
+- **Import Sorting**: isort check
+- **Linting**: Flake8 for code quality
+- **Security Scanning**: Bandit for security vulnerabilities
+- **Fast Feedback**: Runs first to catch issues early
 
 #### Unit Tests Job
 - Runs isolated unit tests
 - Fast feedback on code changes
+- No external dependencies
 
 #### Integration Tests Job
-- Builds and starts all services
-- Runs end-to-end tests
+- Builds and starts all services with Docker Compose
+- Runs integration tests and end-to-end tests
 - Tests fraud detection and email notification logging
 - Verifies complete user flows
+- Depends on lint and unit tests passing first
 
 #### Build Check Job
 - Validates Docker images build successfully
 - Reports image sizes
+- Runs independently to verify build process
 
 **Duration:** ~10-15 minutes
 
@@ -92,14 +81,15 @@ docker compose down
 ## CI/CD Best Practices
 
 ### What Gets Tested
-✅ Code formatting and style
-✅ Security vulnerabilities
-✅ Unit tests (fast, isolated)
-✅ Integration tests (full system)
-✅ Docker image builds
-✅ Service health checks
-✅ Email notification logging
-✅ Fraud detection logic
+✅ **Secret Detection** (detect-secrets baseline check)
+✅ **Security Vulnerabilities** (Bandit)
+✅ **Code Quality** (Black, isort, Flake8)
+✅ **Unit Tests** (fast, isolated)
+✅ **Integration Tests** (full system)
+✅ **Docker Image Builds**
+✅ **Service Health Checks**
+✅ **Email Notification Logging**
+✅ **Fraud Detection Logic**
 
 ### What Doesn't Get Tested
 ❌ Manual UI testing

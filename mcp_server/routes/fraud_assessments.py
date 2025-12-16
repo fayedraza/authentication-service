@@ -15,7 +15,7 @@ from mcp_server.schemas import (
     AuthEventOut,
     ErrorResponse
 )
-from mcp_server.models import MCPAuthEvent
+from mcp_server.models import MCPAuthEvent, MCPAlert
 from mcp_server.db import get_db
 from mcp_server.config import settings
 
@@ -178,7 +178,6 @@ async def get_fraud_assessments(
             )
 
             # Check if an alert was generated for this event
-            from mcp_server.models import MCPAlert
             alert_generated = db.query(MCPAlert).filter(
                 MCPAlert.event_ids.contains(f'"{event.id}"')
             ).first() is not None
