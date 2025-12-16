@@ -116,7 +116,28 @@ def setup_test_data(db_session):
 
     db_session.commit()
 
+    # Create alerts for high-risk events (risk_score > 0.7)
+    from mcp_server.models import MCPAlert
+
+    high_risk_events = [event for event in test_events if event.risk_score and event.risk_score > 0.7]
+
+    for event in high_risk_events:
+        alert = MCPAlert(
+            user_id=event.user_id,
+            username=event.username,
+            event_ids=[event.id],
+            risk_score=event.risk_score,
+            reason=event.fraud_reason,
+            status="open",
+            created_at=event.timestamp,
+            updated_at=event.timestamp
+        )
+        db_session.add(alert)
+
+    db_session.commit()
+
     print(f"✓ Created {len(test_events)} test events (6 with fraud analysis, 1 without)")
+    print(f"✓ Created {len(high_risk_events)} alerts for high-risk events")
 
     yield  # This makes it a fixture
 
@@ -237,12 +258,12 @@ def test_sort_by_risk_score(setup_test_data, test_client):
     print("✓ Test passed: Sorting by risk score works correctly")
 
 
-def test_pagination():
+def test_pagination(setup_test_data, test_client):
     """Test pagination with limit and offset"""
     print("\n=== Test 5: Pagination ===")
 
     # Get first 3 assessments
-    response1 = client.get("/mcp/fraud-assessments?limit=3&offset=0&order=desc")
+    response1 = test_client.get("/mcp/fraud-assessments?limit=3&offset=0&order=desc")
     data1 = response1.json()
 
     print(f"Page 1 - Status Code: {response1.status_code}")
@@ -255,7 +276,7 @@ def test_pagination():
     assert data1['offset'] == 0, f"Expected offset 0, got {data1['offset']}"
 
     # Get next 3 assessments
-    response2 = client.get("/mcp/fraud-assessments?limit=3&offset=3&order=desc")
+    response2 = test_client.get("/mcp/fraud-assessments?limit=3&offset=3&order=desc")
     data2 = response2.json()
 
     print(f"Page 2 - Status Code: {response2.status_code}")
@@ -273,11 +294,11 @@ def test_pagination():
     print("✓ Test passed: Pagination works correctly")
 
 
-def test_combined_filters():
+def test_combined_filters(setup_test_data, test_client):
     """Test combining multiple filters"""
     print("\n=== Test 6: Combined Filters ===")
 
-    response = client.get("/mcp/fraud-assessments?user_id=123&min_risk_score=0.5")
+    response = test_client.get("/mcp/fraud-assessments?user_id=123&min_risk_score=0.5")
 
     print(f"Status Code: {response.status_code}")
     data = response.json()
@@ -295,11 +316,11 @@ def test_combined_filters():
     print("✓ Test passed: Combined filters work correctly")
 
 
-def test_invalid_risk_score_range():
+def test_invalid_risk_score_range(setup_test_data, test_client):
     """Test with invalid risk score range"""
     print("\n=== Test 7: Invalid Risk Score Range ===")
 
-    response = client.get("/mcp/fraud-assessments?min_risk_score=0.8&max_risk_score=0.3")
+    response = test_client.get("/mcp/fraud-assessments?min_risk_score=0.8&max_risk_score=0.3")
 
     print(f"Status Code: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
@@ -309,11 +330,11 @@ def test_invalid_risk_score_range():
     print("✓ Test passed: Invalid risk score range rejected")
 
 
-def test_assessment_structure():
+def test_assessment_structure(setup_test_data, test_client):
     """Test that assessment structure is correct"""
     print("\n=== Test 8: Assessment Structure ===")
 
-    response = client.get("/mcp/fraud-assessments?limit=1")
+    response = test_client.get("/mcp/fraud-assessments?limit=1")
 
     print(f"Status Code: {response.status_code}")
     data = response.json()
@@ -326,6 +347,7 @@ def test_assessment_structure():
     assert 'event' in assessment, "Assessment should contain event"
     assert 'risk_score' in assessment, "Assessment should contain risk_score"
     assert 'email_notification' in assessment, "Assessment should contain email_notification"
+    assert 'alert_generated' in assessment, "Assessment should contain alert_generated"
     assert 'reason' in assessment, "Assessment should contain reason"
     assert 'analyzed_at' in assessment, "Assessment should contain analyzed_at"
 
@@ -346,11 +368,11 @@ def test_assessment_structure():
     print("✓ Test passed: Assessment structure is correct")
 
 
-def test_statistics_calculation():
+def test_statistics_calculation(setup_test_data, test_client):
     """Test that statistics are calculated correctly"""
     print("\n=== Test 9: Statistics Calculation ===")
 
-    response = client.get("/mcp/fraud-assessments")
+    response = test_client.get("/mcp/fraud-assessments")
 
     print(f"Status Code: {response.status_code}")
     data = response.json()
@@ -378,33 +400,3 @@ def test_statistics_calculation():
             f"Average risk score mismatch: {stats['average_risk_score']} != {expected_avg}"
 
     print("✓ Test passed: Statistics calculated correctly")
-
-
-if __name__ == "__main__":
-    print("Starting MCP Server Fraud Assessment Query Tests")
-    print("=" * 50)
-
-    try:
-        base_time = setup_test_data()
-
-        test_get_all_assessments()
-        test_filter_by_user_id()
-        test_filter_by_risk_score_range()
-        test_sort_by_risk_score()
-        test_pagination()
-        test_combined_filters()
-        test_invalid_risk_score_range()
-        test_assessment_structure()
-        test_statistics_calculation()
-
-        print("\n" + "=" * 50)
-        print("✓ All tests passed!")
-
-    except AssertionError as e:
-        print(f"\n✗ Test failed: {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n✗ Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
