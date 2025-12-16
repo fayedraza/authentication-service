@@ -10,12 +10,12 @@ This test suite verifies the complete functionality of the MCP Server including:
 
 Requirements: All (1.1-7.5)
 """
+import os
+# Set lower fraud threshold for testing BEFORE any imports
+os.environ["FRAUD_THRESHOLD"] = "0.3"
+
 import pytest
 from datetime import datetime, timedelta
-import os
-
-# Set lower fraud threshold for testing
-os.environ["FRAUD_THRESHOLD"] = "0.3"
 
 from mcp_server.models import MCPAuthEvent, MCPAlert
 from mcp_server.config import settings
@@ -137,62 +137,79 @@ def test_alert_generation_for_high_risk_event(db_session, test_client):
     Test that alerts are generated for high-risk events
     Requirements: 4.1, 4.2, 4.3
     """
-    user_id = 200
-    base_time = datetime.utcnow()
+    # Temporarily lower the fraud threshold for this test
+    original_threshold = settings.FRAUD_THRESHOLD
+    settings.FRAUD_THRESHOLD = 0.3
 
-    # Create previous successful login
-    prev_event = MCPAuthEvent(
-        id="prev-200",
-        user_id=user_id,
-        username="alert_test_user",
-        event_type="login_success",
-        ip_address="192.168.1.100",
-        user_agent="Mozilla/5.0",
-        timestamp=base_time - timedelta(hours=1),
-        event_metadata={}
-    )
-    db_session.add(prev_event)
+    try:
+        user_id = 200
+        base_time = datetime.utcnow()
 
-    # Create multiple failed login attempts to trigger high risk
-    for i in range(4):
-        failed_event = MCPAuthEvent(
-            id=f"failed-200-{i}",
+        # Create previous successful login
+        prev_event = MCPAuthEvent(
+            id="prev-200",
             user_id=user_id,
             username="alert_test_user",
-            event_type="login_failure",
-            ip_address="10.0.0.50",
-            user_agent="Chrome/91.0",
-            timestamp=base_time - timedelta(minutes=4-i),
+            event_type="login_success",
+            ip_address="192.168.1.100",
+            user_agent="Mozilla/5.0",
+            timestamp=base_time - timedelta(hours=1),
             event_metadata={}
         )
-        db_session.add(failed_event)
+        db_session.add(prev_event)
 
-    db_session.commit()
+        # Create multiple failed login attempts to trigger high risk
+        for i in range(4):
+            failed_event = MCPAuthEvent(
+                id=f"failed-200-{i}",
+                user_id=user_id,
+                username="alert_test_user",
+                event_type="login_failure",
+                ip_address="10.0.0.50",
+                user_agent="Chrome/91.0",
+                timestamp=base_time - timedelta(minutes=4-i),
+                event_metadata={}
+            )
+            db_session.add(failed_event)
 
-    # Ingest new high-risk event
-    event_data = {
-        "user_id": user_id,
-        "username": "alert_test_user",
-        "event_type": "login_failure",
-        "ip_address": "10.0.0.50",
-        "user_agent": "Chrome/91.0",
-        "timestamp": base_time.isoformat() + "Z",
-        "metadata": {}
-    }
+        db_session.commit()
 
-    response = test_client.post("/mcp/ingest", json=event_data)
-    assert response.status_code == 201
-    event_id = response.json()["event_id"]
+        # Ingest new high-risk event
+        event_data = {
+            "user_id": user_id,
+            "username": "alert_test_user",
+            "event_type": "login_failure",
+            "ip_address": "10.0.0.50",
+            "user_agent": "Chrome/91.0",
+            "timestamp": base_time.isoformat() + "Z",
+            "metadata": {}
+        }
 
-    # Verify alert was created
-    alert = db_session.query(MCPAlert).filter(MCPAlert.user_id == user_id).first()
+        response = test_client.post("/mcp/ingest", json=event_data)
+        assert response.status_code == 201
+        event_id = response.json()["event_id"]
 
-    assert alert is not None
-    assert alert.status == "open"
-    assert alert.risk_score >= settings.FRAUD_THRESHOLD
-    assert event_id in alert.event_ids
-    assert alert.username == "alert_test_user"
-    assert len(alert.reason) > 0
+        # First check what risk score the event got
+        event = db_session.query(MCPAuthEvent).filter(MCPAuthEvent.id == event_id).first()
+        print(f"Event risk score: {event.risk_score}, threshold: {settings.FRAUD_THRESHOLD}")
+        print(f"Event fraud reason: {event.fraud_reason}")
+
+        # The risk score should be high enough to trigger an alert with the lowered threshold
+        assert event.risk_score >= 0.3, f"Expected risk score >= 0.3, got {event.risk_score}"
+
+        # Verify alert was created
+        alert = db_session.query(MCPAlert).filter(MCPAlert.user_id == user_id).first()
+
+        assert alert is not None
+        assert alert.status == "open"
+        assert alert.risk_score >= settings.FRAUD_THRESHOLD
+        assert event_id in alert.event_ids
+        assert alert.username == "alert_test_user"
+        assert len(alert.reason) > 0
+
+    finally:
+        # Restore original threshold
+        settings.FRAUD_THRESHOLD = original_threshold
 
 
 def test_no_alert_for_low_risk_event(db_session, test_client):
