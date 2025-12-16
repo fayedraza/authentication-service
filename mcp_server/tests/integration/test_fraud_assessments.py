@@ -1,33 +1,21 @@
 """
 Integration tests for fraud assessment query endpoint
 """
-import sys
 import json
 from datetime import datetime, timedelta
 import pytest
 
-# Add parent directory to path
-sys.path.insert(0, '.')
-
-from fastapi.testclient import TestClient
-from mcp_server.main import app
-from mcp_server.db import SessionLocal
 from mcp_server.models import MCPAuthEvent
 
-# Create test client
-client = TestClient(app)
 
-
-@pytest.fixture(autouse=True)
-def setup_test_data():
+@pytest.fixture
+def setup_test_data(db_session):
     """Create test events with fraud analysis results in the database"""
     print("\n=== Setting up test data ===")
 
-    db = SessionLocal()
-
     # Clear existing test data
-    db.query(MCPAuthEvent).delete()
-    db.commit()
+    db_session.query(MCPAuthEvent).delete()
+    db_session.commit()
 
     # Create test events with fraud analysis
     base_time = datetime.utcnow()
@@ -124,27 +112,20 @@ def setup_test_data():
     ]
 
     for event in test_events:
-        db.add(event)
+        db_session.add(event)
 
-    db.commit()
-    db.close()
+    db_session.commit()
 
     print(f"✓ Created {len(test_events)} test events (6 with fraud analysis, 1 without)")
 
     yield  # This makes it a fixture
 
-    # Cleanup after tests
-    db = SessionLocal()
-    db.query(MCPAuthEvent).delete()
-    db.commit()
-    db.close()
 
-
-def test_get_all_assessments():
+def test_get_all_assessments(setup_test_data, test_client):
     """Test retrieving all fraud assessments"""
     print("\n=== Test 1: Get All Fraud Assessments ===")
 
-    response = client.get("/mcp/fraud-assessments")
+    response = test_client.get("/mcp/fraud-assessments")
 
     print(f"Status Code: {response.status_code}")
     data = response.json()
@@ -170,11 +151,11 @@ def test_get_all_assessments():
     print("✓ Test passed: Retrieved all fraud assessments successfully")
 
 
-def test_filter_by_user_id():
+def test_filter_by_user_id(setup_test_data, test_client):
     """Test filtering assessments by user_id"""
     print("\n=== Test 2: Filter by User ID ===")
 
-    response = client.get("/mcp/fraud-assessments?user_id=123")
+    response = test_client.get("/mcp/fraud-assessments?user_id=123")
 
     print(f"Status Code: {response.status_code}")
     data = response.json()
@@ -191,12 +172,12 @@ def test_filter_by_user_id():
     print("✓ Test passed: Filtered by user_id successfully")
 
 
-def test_filter_by_risk_score_range():
+def test_filter_by_risk_score_range(setup_test_data, test_client):
     """Test filtering assessments by risk score range"""
     print("\n=== Test 3: Filter by Risk Score Range ===")
 
     # Get high-risk events only (score > 0.7)
-    response = client.get("/mcp/fraud-assessments?min_risk_score=0.7")
+    response = test_client.get("/mcp/fraud-assessments?min_risk_score=0.7")
 
     print(f"Status Code: {response.status_code}")
     data = response.json()
@@ -212,7 +193,7 @@ def test_filter_by_risk_score_range():
         assert assessment['alert_generated'] is True, "High-risk events should have alert_generated=True"
 
     # Test medium-risk range
-    response2 = client.get("/mcp/fraud-assessments?min_risk_score=0.4&max_risk_score=0.7")
+    response2 = test_client.get("/mcp/fraud-assessments?min_risk_score=0.4&max_risk_score=0.7")
     data2 = response2.json()
 
     print(f"Medium-risk assessments: {data2['total']}")
@@ -224,12 +205,12 @@ def test_filter_by_risk_score_range():
     print("✓ Test passed: Filtered by risk score range successfully")
 
 
-def test_sort_by_risk_score():
+def test_sort_by_risk_score(setup_test_data, test_client):
     """Test sorting assessments by risk score"""
     print("\n=== Test 4: Sort by Risk Score ===")
 
     # Test descending order (default)
-    response_desc = client.get("/mcp/fraud-assessments?sort_by=risk_score&order=desc")
+    response_desc = test_client.get("/mcp/fraud-assessments?sort_by=risk_score&order=desc")
 
     print(f"Status Code (desc): {response_desc.status_code}")
     data_desc = response_desc.json()
@@ -244,7 +225,7 @@ def test_sort_by_risk_score():
         assert risk_scores_desc[i] >= risk_scores_desc[i + 1], "Risk scores should be in descending order"
 
     # Test ascending order
-    response_asc = client.get("/mcp/fraud-assessments?sort_by=risk_score&order=asc")
+    response_asc = test_client.get("/mcp/fraud-assessments?sort_by=risk_score&order=asc")
     data_asc = response_asc.json()
 
     # Verify ascending order

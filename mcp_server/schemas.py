@@ -210,6 +210,7 @@ class FraudAssessmentOut(BaseModel):
     event: AuthEventOut = Field(..., description="The authentication event that was analyzed")
     risk_score: float = Field(..., ge=0.0, le=1.0, description="Fraud risk score (0-1)")
     email_notification: bool = Field(..., description="Whether an email notification should be sent to the user")
+    alert_generated: bool = Field(..., description="Whether an alert was generated for this event")
     reason: str = Field(..., description="Explanation of the fraud assessment")
     analyzed_at: str = Field(..., description="Timestamp when fraud analysis was performed")
 
