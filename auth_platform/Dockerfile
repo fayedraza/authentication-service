@@ -19,7 +19,8 @@ WORKDIR /app
 
 
 # Set working dir
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml ./
+RUN poetry lock --no-update
 RUN poetry install --no-root
 
 # Copy only necessary files first (for better caching)
