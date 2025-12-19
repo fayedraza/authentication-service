@@ -63,7 +63,7 @@ async def get_fraud_assessments(
     start_date: Optional[str] = Query(None, description="Filter events after this timestamp (ISO 8601 format)"),
     end_date: Optional[str] = Query(None, description="Filter events before this timestamp (ISO 8601 format)"),
     sort_by: str = Query("risk_score", description="Field to sort by (currently only 'risk_score' supported)"),
-    order: str = Query("desc", regex="^(asc|desc)$", description="Sort order: 'asc' or 'desc'"),
+    order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order: 'asc' or 'desc'"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of assessments to return"),
     offset: int = Query(0, ge=0, description="Number of assessments to skip for pagination"),
     db: Session = Depends(get_db)
