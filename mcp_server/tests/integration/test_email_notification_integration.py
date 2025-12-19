@@ -1,4 +1,5 @@
 """
+REQUEST_TIMEOUT = 30  # 30 second timeout for all requests
 Integration test for email notification logging using testcontainers.
 
 This test verifies that the MCP server correctly logs email notifications
@@ -103,7 +104,7 @@ def test_email_notification_logging_for_brute_force_attack(mcp_container):
             "metadata": {"attempt": i + 1}
         }
 
-        response = requests.post(f"{api_url}/mcp/ingest", json=event_data)
+        response = requests.post(f"{api_url}/mcp/ingest", json=event_data, timeout=REQUEST_TIMEOUT)
         assert response.status_code == 201, f"Failed to ingest event {i}: {response.text}"
 
         event_id = response.json()["event_id"]
@@ -167,7 +168,7 @@ def test_email_notification_logging_for_ip_change_with_failures(mcp_container):
         "metadata": {}
     }
 
-    response = requests.post(f"{api_url}/mcp/ingest", json=success_event)
+    response = requests.post(f"{api_url}/mcp/ingest", json=success_event, timeout=REQUEST_TIMEOUT)
     assert response.status_code == 201
     time.sleep(0.5)
 
@@ -184,7 +185,7 @@ def test_email_notification_logging_for_ip_change_with_failures(mcp_container):
             "metadata": {"attempt": i + 1}
         }
 
-        response = requests.post(f"{api_url}/mcp/ingest", json=event_data)
+        response = requests.post(f"{api_url}/mcp/ingest", json=event_data, timeout=REQUEST_TIMEOUT)
         assert response.status_code == 201
         time.sleep(0.2)
 
@@ -236,7 +237,7 @@ def test_no_email_notification_for_low_risk_events(mcp_container):
             "metadata": {}
         }
 
-        response = requests.post(f"{api_url}/mcp/ingest", json=event_data)
+        response = requests.post(f"{api_url}/mcp/ingest", json=event_data, timeout=REQUEST_TIMEOUT)
         assert response.status_code == 201
         time.sleep(0.2)
 
@@ -288,7 +289,7 @@ def test_email_notification_logging_for_2fa_failures(mcp_container):
             "metadata": {"attempt": i + 1}
         }
 
-        response = requests.post(f"{api_url}/mcp/ingest", json=event_data)
+        response = requests.post(f"{api_url}/mcp/ingest", json=event_data, timeout=REQUEST_TIMEOUT)
         assert response.status_code == 201
         time.sleep(0.2)
 
@@ -340,7 +341,7 @@ def test_verify_fraud_assessment_api_after_email_trigger(mcp_container):
             "metadata": {}
         }
 
-        response = requests.post(f"{api_url}/mcp/ingest", json=event_data)
+        response = requests.post(f"{api_url}/mcp/ingest", json=event_data, timeout=REQUEST_TIMEOUT)
         assert response.status_code == 201
         time.sleep(0.2)
 
@@ -348,7 +349,7 @@ def test_verify_fraud_assessment_api_after_email_trigger(mcp_container):
     time.sleep(2)
 
     # Query fraud assessments API
-    response = requests.get(f"{api_url}/mcp/fraud-assessments?user_id={user_id}")
+    response = requests.get(f"{api_url}/mcp/fraud-assessments?user_id={user_id}", timeout=REQUEST_TIMEOUT)
     assert response.status_code == 200
 
     data = response.json()

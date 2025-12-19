@@ -18,8 +18,9 @@ if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
 # Set test environment variables before importing modules
-# Use a temporary file database that can be shared between connections
-test_db_file = tempfile.mktemp(suffix=".db")
+# Use a secure temporary file database that can be shared between connections
+test_db_fd, test_db_file = tempfile.mkstemp(suffix=".db")
+os.close(test_db_fd)  # Close the file descriptor, we only need the path
 os.environ["DATABASE_URL"] = f"sqlite:///{test_db_file}"
 os.environ["LOG_LEVEL"] = "ERROR"  # Reduce log noise during tests
 

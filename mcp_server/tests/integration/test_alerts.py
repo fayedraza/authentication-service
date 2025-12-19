@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timedelta
 
 BASE_URL = "http://localhost:8001"
+REQUEST_TIMEOUT = 30  # 30 second timeout for all requests
 
 
 def test_alert_creation_and_query():
@@ -34,7 +35,7 @@ def test_alert_creation_and_query():
             "metadata": {"attempt": i + 1}
         }
 
-        response = requests.post(f"{BASE_URL}/mcp/ingest", json=event)
+        response = requests.post(f"{BASE_URL}/mcp/ingest", json=event, timeout=REQUEST_TIMEOUT)
         if response.status_code == 201:
             result = response.json()
             event_ids.append(result["event_id"])
@@ -49,7 +50,7 @@ def test_alert_creation_and_query():
 
     # Test 2: Query alerts for this user
     print(f"\n2. Querying alerts for user {user_id}...")
-    response = requests.get(f"{BASE_URL}/mcp/alerts", params={"user_id": user_id})
+    response = requests.get(f"{BASE_URL}/mcp/alerts", params={"user_id": user_id}, timeout=REQUEST_TIMEOUT)
 
     if response.status_code == 200:
         alerts_data = response.json()
@@ -74,10 +75,8 @@ def test_alert_creation_and_query():
 
     # Test 3: Query alerts with filters
     print("\n3. Querying open alerts with min risk score 0.7...")
-    response = requests.get(
-        f"{BASE_URL}/mcp/alerts",
-        params={"status": "open", "min_risk_score": 0.7}
-    )
+    response = requests.get(f"{BASE_URL}/mcp/alerts",
+        params={"status": "open", "min_risk_score": 0.7}, timeout=REQUEST_TIMEOUT)
 
     if response.status_code == 200:
         alerts_data = response.json()
@@ -90,10 +89,8 @@ def test_alert_creation_and_query():
         alert_id = alerts_data['alerts'][0]['id']
         print(f"\n4. Updating alert {alert_id} status to 'reviewed'...")
 
-        response = requests.patch(
-            f"{BASE_URL}/mcp/alerts/{alert_id}",
-            json={"status": "reviewed"}
-        )
+        response = requests.patch(f"{BASE_URL}/mcp/alerts/{alert_id}",
+            json={"status": "reviewed"}, timeout=REQUEST_TIMEOUT)
 
         if response.status_code == 200:
             updated_alert = response.json()
@@ -106,10 +103,8 @@ def test_alert_creation_and_query():
         # Test 5: Update to resolved
         print(f"\n5. Updating alert {alert_id} status to 'resolved'...")
 
-        response = requests.patch(
-            f"{BASE_URL}/mcp/alerts/{alert_id}",
-            json={"status": "resolved"}
-        )
+        response = requests.patch(f"{BASE_URL}/mcp/alerts/{alert_id}",
+            json={"status": "resolved"}, timeout=REQUEST_TIMEOUT)
 
         if response.status_code == 200:
             updated_alert = response.json()
@@ -132,7 +127,7 @@ def test_alert_creation_and_query():
             "metadata": {"consolidation_test": True}
         }
 
-        response = requests.post(f"{BASE_URL}/mcp/ingest", json=event)
+        response = requests.post(f"{BASE_URL}/mcp/ingest", json=event, timeout=REQUEST_TIMEOUT)
         if response.status_code == 201:
             print(f"   ✓ Additional event {i+1} ingested")
 
@@ -140,10 +135,8 @@ def test_alert_creation_and_query():
 
     # Query alerts again to see if they were consolidated
     print(f"\n7. Checking for alert consolidation...")
-    response = requests.get(
-        f"{BASE_URL}/mcp/alerts",
-        params={"user_id": user_id, "status": "open"}
-    )
+    response = requests.get(f"{BASE_URL}/mcp/alerts",
+        params={"user_id": user_id, "status": "open"}, timeout=REQUEST_TIMEOUT)
 
     if response.status_code == 200:
         alerts_data = response.json()
@@ -158,10 +151,8 @@ def test_alert_creation_and_query():
 
     # Test 8: Test invalid alert ID
     print("\n8. Testing error handling (invalid alert ID)...")
-    response = requests.patch(
-        f"{BASE_URL}/mcp/alerts/invalid-alert-id",
-        json={"status": "reviewed"}
-    )
+    response = requests.patch(f"{BASE_URL}/mcp/alerts/invalid-alert-id",
+        json={"status": "reviewed"}, timeout=REQUEST_TIMEOUT)
 
     if response.status_code == 404:
         print(f"   ✓ Correctly returned 404 for invalid alert ID")
@@ -172,10 +163,8 @@ def test_alert_creation_and_query():
     print("\n9. Testing error handling (invalid status value)...")
     if alerts_data['alerts']:
         alert_id = alerts_data['alerts'][0]['id']
-        response = requests.patch(
-            f"{BASE_URL}/mcp/alerts/{alert_id}",
-            json={"status": "invalid_status"}
-        )
+        response = requests.patch(f"{BASE_URL}/mcp/alerts/{alert_id}",
+            json={"status": "invalid_status"}, timeout=REQUEST_TIMEOUT)
 
         if response.status_code == 422:
             print(f"   ✓ Correctly returned 422 for invalid status value")
