@@ -60,16 +60,20 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install Auth Platform dependencies
+    - name: Install Poetry
       run: |
         python -m pip install --upgrade pip
+        pip install poetry
+
+    - name: Install Auth Platform dependencies
+      run: |
         cd auth_platform
-        pip install -e .[test]
+        poetry install --with test
 
     - name: Run Auth Platform unit tests
       run: |
         cd auth_platform
-        pytest auth_platform_tests/ -v
+        poetry run pytest auth_platform_tests/ -v
 
     - name: Install MCP Server dependencies
       run: |
@@ -96,9 +100,13 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install test dependencies
+    - name: Install Poetry
       run: |
         python -m pip install --upgrade pip
+        pip install poetry
+
+    - name: Install test dependencies
+      run: |
         cd mcp_server
         pip install -e .[test]
         pip install httpx
