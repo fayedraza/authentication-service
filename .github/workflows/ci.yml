@@ -20,12 +20,6 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Secret Scanning
-      run: |
-        python -m pip install --upgrade pip
-        pip install detect-secrets
-        detect-secrets scan --baseline .secrets.baseline
-
     - name: Install linting tools
       run: |
         python -m pip install --upgrade pip
@@ -46,6 +40,13 @@ jobs:
     - name: Run Bandit (security check)
       run: |
         bandit -r mcp_server/ auth_platform/auth_platform/ -ll || true
+
+  secret-scan:
+    - name: Secret Scanning
+      run: |
+        python -m pip install --upgrade pip
+        pip install detect-secrets
+        detect-secrets scan --baseline .secrets.baseline
 
   unit-tests:
     name: Unit Tests
