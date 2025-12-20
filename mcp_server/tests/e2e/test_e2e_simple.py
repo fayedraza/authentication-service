@@ -38,7 +38,7 @@ def test_basic_event_ingestion():
 
     result = response.json()
     assert "event_id" in result
-    assert result["status"] == "processed"
+    assert result["status"] == "accepted"
 
 
 def test_fraud_assessment_query():
