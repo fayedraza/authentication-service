@@ -22,6 +22,8 @@ dist/
 *.db
 
 # Environment variables
+.env
+.env.*
 
 # Pytest
 .pytest_cache/
