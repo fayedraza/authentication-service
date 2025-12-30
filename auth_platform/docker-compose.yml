@@ -17,6 +17,8 @@ services:
       - MCP_PUSH_ENABLED=true
       - MCP_TIMEOUT_SECONDS=2.0
       - MCP_MAX_RETRIES=2
+      - BAML_ENABLED=${BAML_ENABLED}
+      - BAML_API_KEY=${BAML_API_KEY}
     depends_on:
       - mcp-server
 
