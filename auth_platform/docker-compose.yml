@@ -35,7 +35,8 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:8000
       - FRAUD_THRESHOLD=0.7
       - RULE_BASED_FALLBACK=true
-      - BAML_ENABLED=false
+      - BAML_ENABLED=${BAML_ENABLED}
+      - BAML_API_KEY=${BAML_API_KEY}
       - ALERT_CONSOLIDATION_WINDOW_MINUTES=5
       - MAX_EVENTS_PER_ALERT=10
 
