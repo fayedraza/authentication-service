@@ -127,6 +127,11 @@ jobs:
         pip install -e .[test]
         pip install httpx
 
+    - name: Create .env files
+      run: |
+        touch auth_platform/.env
+        touch mcp_server/.env
+
     - name: Build Docker images
       run: |
         cd auth_platform
@@ -252,11 +257,13 @@ jobs:
     - name: Build Auth Service image
       run: |
         cd auth_platform
+        touch .env
         docker build -t auth-service-test -f Dockerfile .
 
     - name: Build MCP Server image
       run: |
         cd mcp_server
+        touch .env
         docker build -t mcp-server-test -f Dockerfile .
 
     - name: Check image sizes
