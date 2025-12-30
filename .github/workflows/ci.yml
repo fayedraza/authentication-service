@@ -190,7 +190,7 @@ jobs:
     - name: Run integration tests
       run: |
         cd mcp_server
-        pytest tests/integration/test_integration.py tests/integration/test_fraud_assessments.py tests/integration/test_fraud_detection.py tests/integration/test_ingest_fraud_integration.py -v --tb=short
+        pytest tests/integration/ -v --tb=short
 
     - name: Run service-dependent integration tests
       run: |
