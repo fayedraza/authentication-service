@@ -103,6 +103,9 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [lint, unit-tests]
+    env:
+        BAML_API_KEY: ${{ secrets.BAML_API_KEY }}
+        BAML_ENABLED: ${{ secrets.BAML_ENABLED }}
 
     steps:
     - name: Checkout code
