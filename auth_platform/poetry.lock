@@ -34,6 +34,22 @@ typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 trio = ["trio (>=0.31.0)"]
 
 [[package]]
+name = "baml-py"
+version = "0.40.0"
+description = "BAML python bindings (pyproject.toml)"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "baml_py-0.40.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:6aa422abc1df8ebe0f0cb2932343e514d77738cc928493bee8463fc4d8fd077f"},
+    {file = "baml_py-0.40.0-cp38-abi3-macosx_10_13_x86_64.whl", hash = "sha256:00536a0ccc613371bfe4a793d46994c13a1f5cc57c5fc14ded2b474811c859a9"},
+    {file = "baml_py-0.40.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:613f26321b81a9b9918ca357fb3a0474e5b9370339a18448787db91a5c21d9dc"},
+    {file = "baml_py-0.40.0-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:de83fc096f6a78a97005e88cadfbc0cf3004c207d70a3968c7cef90362bb7b11"},
+    {file = "baml_py-0.40.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a0896de6342f1d0a053c73756e5f5c2aec51a37d53b3750a62a36b81fedb4457"},
+    {file = "baml_py-0.40.0-cp38-abi3-win_amd64.whl", hash = "sha256:a792156b99d1da2b30a4fae319fdc6fb325ec27ea982ef86b48a366186981c52"},
+]
+
+[[package]]
 name = "bcrypt"
 version = "4.3.0"
 description = "Modern password hashing for your software and your servers"
@@ -1883,4 +1899,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "c98dacbb7a3994d6bb2ef83b1ee4fbd0a97ab34f99a2316853ec1eb85fd8b019"
+content-hash = "3504cfbb157a65be634dfd17423c6deabd56b6610af3050298bfd2022304a42e"

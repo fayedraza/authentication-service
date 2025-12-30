@@ -1,0 +1,98 @@
+
+name: fraud-detection-pipeline
+version: 1.0
+description: Automated fraud detection pipeline for authentication events
+
+# Schedule: Run every 15 minutes to analyze new events
+schedule: "*/15 * * * *"
+
+# Environment configuration
+environment:
+  - name: MCP_SERVER_URL
+    value: "http://mcp-server:8001"
+  - name: AUTH_SERVICE_URL
+    value: "http://auth-service:8000"
+  - name: BAML_LOG_LEVEL
+    value: "INFO"
+
+# Pipeline tasks
+tasks:
+  # Task 1: Fetch unanalyzed authentication events
+  - name: fetch-unanalyzed-events
+    type: data-source
+    config:
+      source_type: http_api
+      endpoint: "${MCP_SERVER_URL}/events/unanalyzed"
+      method: GET
+      headers:
+        Content-Type: "application/json"
+      pagination:
+        enabled: true
+        page_size: 100
+        max_pages: 10
+    outputs:
+      - events
+
+  # Task 2: Analyze events for fraud indicators
+  - name: analyze-fraud-risk
+    type: baml-agent
+    depends_on: [fetch-unanalyzed-events]
+    agent: FraudDetection
+    config:
+      batch_size: 10
+      timeout_seconds: 30
+      retry_attempts: 3
+    inputs:
+      events: ${fetch-unanalyzed-events.outputs.events}
+    transformation: |
+      # Transform MCP event format to agent input format
+      for event in events:
+        yield {
+          "user_id": event.user_id,
+          "username": event.username,
+          "event_type": event.event_type,
+          "ip_address": event.ip_address,
+          "user_agent": event.user_agent,
+          "timestamp": event.timestamp,
+          "recent_events": event.recent_events or []
+        }
+    outputs:
+      - fraud_assessments
+
+  # Task 3: Update events with fraud analysis results
+  - name: update-fraud-scores
+    type: data-sink
+    depends_on: [analyze-fraud-risk]
+    config:
+      sink_type: http_api
+      endpoint: "${MCP_SERVER_URL}/events/update-fraud-scores"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      batch_size: 50
+    inputs:
+      assessments: ${analyze-fraud-risk.outputs.fraud_assessments}
+    transformation: |
+      # Transform agent output to MCP update format
+      for assessment in assessments:
+        yield {
+          "event_id": assessment.event_id,
+          "risk_score": assessment.risk_score,
+          "risk_level": assessment.risk_level,
+          "fraud_reason": assessment.reason,
+          "risk_factors": assessment.risk_factors,
+          "confidence": assessment.confidence,
+          "analyzed_at": "${current_timestamp}"
+        }
+
+# Error handling configuration
+error_handling:
+  retry_policy:
+    max_attempts: 3
+    backoff_strategy: exponential
+    base_delay_seconds: 5
+
+  failure_actions:
+    - type: log
+      level: ERROR
+      message: "Fraud detection pipeline failed: ${error_message}"

@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
-from auth_platform.auth_platform.auth_service.main import app
+from auth_platform.auth_service.main import app
 import pytest
-from auth_platform.auth_platform.auth_service.db import Base, engine, get_db
-from auth_platform.auth_platform.auth_service.models import AuthEvent
+from auth_platform.auth_service.db import Base, engine, get_db
+from auth_platform.auth_service.models import AuthEvent
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():

@@ -1,11 +1,11 @@
 from fastapi.testclient import TestClient
-from auth_platform.auth_platform.auth_service.main import app
+from auth_platform.auth_service.main import app
 import pytest
-from auth_platform.auth_platform.auth_service.db import Base, engine
+from auth_platform.auth_service.db import Base, engine
 from sqlalchemy.orm import Session
-from auth_platform.auth_platform.auth_service.db import SessionLocal
-from auth_platform.auth_platform.auth_service.models import User
-from auth_platform.auth_platform.auth_service.auth import hash_password
+from auth_platform.auth_service.db import SessionLocal
+from auth_platform.auth_service.models import User
+from auth_platform.auth_service.auth import hash_password
 import pyotp
 
 
@@ -132,7 +132,7 @@ def test_verify_rate_limiting(client):
 def test_verify_rate_limit_reset(client):
     """Test that rate limit resets after 15 minutes."""
     from datetime import datetime, timedelta
-    from auth_platform.auth_platform.auth_service.models import TOTPAttempt
+    from auth_platform.auth_service.models import TOTPAttempt
 
     username = "rate_limit_reset_user"
     password = "Secret123!"
@@ -580,7 +580,7 @@ def test_login_after_disable(client):
 
 def test_2fa_success_logs_event(client):
     """Test that successful 2FA verification logs a 2fa_success event."""
-    from auth_platform.auth_platform.auth_service.models import AuthEvent
+    from auth_platform.auth_service.models import AuthEvent
 
     username = "2fa_success_event_user"
     password = "Secret123!"
@@ -622,7 +622,7 @@ def test_2fa_success_logs_event(client):
 
 def test_2fa_failure_logs_event(client):
     """Test that failed 2FA verification logs a 2fa_failure event."""
-    from auth_platform.auth_platform.auth_service.models import AuthEvent
+    from auth_platform.auth_service.models import AuthEvent
 
     username = "2fa_failure_event_user"
     password = "Secret123!"

@@ -122,7 +122,7 @@ async def ingest_event(
 
         # Perform fraud detection analysis
         try:
-            assessment = fraud_detector.analyze_event(event, db)
+            assessment = await fraud_detector.analyze_event(event, db)
 
             # Update event with fraud detection results
             mcp_event.risk_score = assessment.risk_score

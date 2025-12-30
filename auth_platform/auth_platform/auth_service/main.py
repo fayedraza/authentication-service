@@ -20,11 +20,16 @@ from .schemas import (
 )
 from .auth import hash_password, verify_password, create_access_token, check_rate_limit, record_totp_attempt
 from .utils.event_logger import log_auth_event
-from .routes import dev_monitor
+from .utils.baml_wrapper import get_fraud_agent, AuthEvent, get_ticket_agent, OwnerContext
+from .routes import dev_monitor, api_keys
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Union, Optional
 import os
 import pyotp
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from datetime import datetime, timedelta
 import uuid
 import jwt
@@ -42,6 +47,8 @@ app.add_middleware(
 
 # Include dev monitor router
 app.include_router(dev_monitor.router)
+# Include API Keys router
+app.include_router(api_keys.router)
 
 @app.on_event("startup")
 def startup():
@@ -114,7 +121,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         ) from e
 
 @app.post("/login", response_model=Union[Token, LoginStep1Response])
-def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
+async def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == credentials.username).first()
     if not user or not verify_password(credentials.password, user.password):
         # Log login failure event if user exists
@@ -131,6 +138,8 @@ def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db
             message="Please enter the 6-digit code from your authenticator app",
             username=user.username
         )
+
+    # Fraud detection is handled asynchronously via log_auth_event -> MCP Server
 
     # Log successful login without 2FA
     log_auth_event("login_success", user, request, db)
@@ -353,12 +362,82 @@ def get_current_user(
     return user
 
 
+
+async def analyze_ticket_with_ai(ticket: Ticket, user: User, db: Session) -> dict:
+    """
+    Analyze ticket with BAML AI agent.
+    """
+    agent = get_ticket_agent()
+
+    # Gather context
+    ticket_count = db.query(Ticket).filter(Ticket.owner_id == user.id).count()
+    # Simple calculation for resolution time (mock for now as history might be empty)
+    avg_res_time = 24.0
+
+    owner_context = OwnerContext(
+        previous_ticket_count=ticket_count,
+        account_age_days=30, # Mock: would calculate from user.created_at
+        last_ticket_date=datetime.utcnow().isoformat(), # Mock
+        avg_resolution_time_hours=avg_res_time,
+    )
+
+    # Call Agent
+    analysis = await agent.analyze_ticket(
+        ticket_id=ticket.id,
+        title=ticket.title,
+        description=ticket.description,
+        owner_tier=user.tier,
+        created_at=ticket.created_at.isoformat(),
+        owner_context=owner_context
+    )
+
+    print(f"[AI Agent] Ticket {ticket.id} analyzed: priority={analysis.priority}, escalate={analysis.escalate}")
+
+    return {
+        "priority": analysis.priority.lower(),
+        "category": analysis.category.lower(),
+        "escalate": analysis.escalate,
+        "escalation_reason": analysis.escalation_reason
+    }
+
 @app.post("/support/ticket", response_model=TicketResponse)
-def create_ticket(payload: TicketCreate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    ticket = Ticket(owner_id=user.id, title=payload.title, description=payload.description, status="open")
+async def create_ticket(payload: TicketCreate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Initialize with defaults
+    ticket = Ticket(
+        owner_id=user.id,
+        title=payload.title,
+        description=payload.description,
+        status="open",
+        priority="medium",
+        escalated=False
+    )
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
+
+    # Trigger AI agent analysis
+    try:
+        agent_result = await analyze_ticket_with_ai(ticket, user, db)
+        if agent_result:
+            # Update ticket with AI analysis results
+            ticket.priority = agent_result.get("priority", ticket.priority)
+            ticket.category = agent_result.get("category", ticket.category)
+            ticket.escalated = agent_result.get("escalate", False)
+            ticket.escalation_reason = agent_result.get("escalation_reason", None)
+
+            db.add(ticket)
+            db.commit()
+            db.refresh(ticket)
+
+            # Send notification if escalated
+            if ticket.escalated:
+                print(f"[Notification] ESCALATED TICKET #{ticket.id} for {user.username} (Tier: {user.tier})")
+                print(f"  Reason: {ticket.escalation_reason}")
+
+    except Exception as e:
+        # Log error but don't fail ticket creation
+        print(f"[AI Agent] Error analyzing ticket {ticket.id}: {str(e)}")
+
     return ticket
 
 

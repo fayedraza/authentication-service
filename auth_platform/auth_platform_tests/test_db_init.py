@@ -5,8 +5,8 @@ from sqlalchemy.orm import sessionmaker
 import os
 import tempfile
 
-from auth_platform.auth_platform.auth_service.db import Base, init_db
-from auth_platform.auth_platform.auth_service.models import AuthEvent, User, TOTPAttempt
+from auth_platform.auth_service.db import Base, init_db
+from auth_platform.auth_service.models import AuthEvent, User, TOTPAttempt
 
 
 def test_init_db_creates_auth_events_table():
@@ -20,7 +20,7 @@ def test_init_db_creates_auth_events_table():
         test_engine = create_engine(f"sqlite:///{tmp_db_path}", connect_args={"check_same_thread": False})
 
         # Temporarily override the engine in the db module
-        import auth_platform.auth_platform.auth_service.db as db_module
+        import auth_platform.auth_service.db as db_module
         original_engine = db_module.engine
         db_module.engine = test_engine
         db_module.Base.metadata.bind = test_engine
@@ -80,7 +80,7 @@ def test_init_db_creates_auth_events_indexes():
         test_engine = create_engine(f"sqlite:///{tmp_db_path}", connect_args={"check_same_thread": False})
 
         # Temporarily override the engine in the db module
-        import auth_platform.auth_platform.auth_service.db as db_module
+        import auth_platform.auth_service.db as db_module
         original_engine = db_module.engine
         db_module.engine = test_engine
         db_module.Base.metadata.bind = test_engine
@@ -131,7 +131,7 @@ def test_init_db_creates_foreign_key_constraint():
         test_engine = create_engine(f"sqlite:///{tmp_db_path}", connect_args={"check_same_thread": False})
 
         # Temporarily override the engine in the db module
-        import auth_platform.auth_platform.auth_service.db as db_module
+        import auth_platform.auth_service.db as db_module
         original_engine = db_module.engine
         db_module.engine = test_engine
         db_module.Base.metadata.bind = test_engine

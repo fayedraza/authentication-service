@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=sqlite:///./app.db
       - ENVIRONMENT=local
@@ -34,13 +36,17 @@ services:
       - AUTH_SERVICE_URL=http://auth_platform:8000
       - FRAUD_THRESHOLD=0.7
       - RULE_BASED_FALLBACK=true
-      - BAML_ENABLED=false
+      - BAML_ENABLED=true
+      - BAML_API_KEY=dummy_test_key
       - BAML_TIMEOUT_MS=5000
       - ALERT_CONSOLIDATION_WINDOW_MINUTES=5
       - MAX_EVENTS_PER_ALERT=10
       - DB_POOL_SIZE=5
       - DB_MAX_OVERFLOW=10
       - EVENT_RETENTION_DAYS=90
+
+    volumes:
+      - ./mcp_server:/workspace/mcp_server
 
     networks:
       - app-network

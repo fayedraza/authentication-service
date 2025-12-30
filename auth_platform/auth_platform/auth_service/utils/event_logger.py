@@ -47,7 +47,9 @@ ALLOWED_EVENT_TYPES = {
     "login_failure",
     "2fa_success",
     "2fa_failure",
-    "password_reset"
+    "2fa_failure",
+    "password_reset",
+    "login_blocked_fraud"
 }
 
 

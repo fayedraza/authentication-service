@@ -1,0 +1,18 @@
+Collecting testcontainers
+  Using cached testcontainers-4.13.3-py3-none-any.whl.metadata (8.4 kB)
+Collecting docker (from testcontainers)
+  Using cached docker-7.1.0-py3-none-any.whl.metadata (3.8 kB)
+Requirement already satisfied: python-dotenv in ./.venv/lib/python3.12/site-packages (from testcontainers) (1.0.0)
+Requirement already satisfied: typing-extensions in ./.venv/lib/python3.12/site-packages (from testcontainers) (4.15.0)
+Requirement already satisfied: urllib3 in ./.venv/lib/python3.12/site-packages (from testcontainers) (2.6.2)
+Collecting wrapt (from testcontainers)
+  Using cached wrapt-2.0.1-cp312-cp312-macosx_10_13_x86_64.whl.metadata (9.0 kB)
+Requirement already satisfied: requests>=2.26.0 in ./.venv/lib/python3.12/site-packages (from docker->testcontainers) (2.31.0)
+Requirement already satisfied: charset-normalizer<4,>=2 in ./.venv/lib/python3.12/site-packages (from requests>=2.26.0->docker->testcontainers) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in ./.venv/lib/python3.12/site-packages (from requests>=2.26.0->docker->testcontainers) (3.11)
+Requirement already satisfied: certifi>=2017.4.17 in ./.venv/lib/python3.12/site-packages (from requests>=2.26.0->docker->testcontainers) (2025.11.12)
+Using cached testcontainers-4.13.3-py3-none-any.whl (124 kB)
+Using cached docker-7.1.0-py3-none-any.whl (147 kB)
+Using cached wrapt-2.0.1-cp312-cp312-macosx_10_13_x86_64.whl (61 kB)
+Installing collected packages: wrapt, docker, testcontainers
+Successfully installed docker-7.1.0 testcontainers-4.13.3 wrapt-2.0.1

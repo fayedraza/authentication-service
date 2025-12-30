@@ -8,7 +8,7 @@ import logging
 
 from mcp_server.config import settings
 from mcp_server.db import init_db
-from mcp_server.routes import ingest, events, fraud_assessments, health
+from mcp_server.routes import ingest, events, fraud_assessments, health, alerts
 
 # Configure logging
 logging.basicConfig(
@@ -45,6 +45,7 @@ app.add_middleware(
 app.include_router(ingest.router)
 app.include_router(events.router)
 app.include_router(fraud_assessments.router)
+app.include_router(alerts.router)
 app.include_router(health.router)
 
 

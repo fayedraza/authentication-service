@@ -78,7 +78,8 @@ def test_fraud_detector_initialization():
     print("  Verified: FraudDetector initializes with custom threshold")
 
 
-def test_rule_multiple_failed_logins(db_session):
+@pytest.mark.asyncio
+async def test_rule_multiple_failed_logins(db_session):
     """Test Rule: Multiple failed login attempts (3+ in 5 minutes): +0.3"""
     print("\n✓ Test Rule: Multiple Failed Login Attempts")
 
@@ -114,7 +115,7 @@ def test_rule_multiple_failed_logins(db_session):
         metadata={}
     )
 
-    assessment = detector.analyze_event(new_event, db)
+    assessment = await detector.analyze_event(new_event, db)
 
     assert assessment.risk_score >= 0.3, f"Risk score should be at least 0.3, got {assessment.risk_score}"
     assert "failed login attempts" in assessment.reason.lower()
@@ -122,7 +123,8 @@ def test_rule_multiple_failed_logins(db_session):
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_rule_multiple_failed_2fa(db_session):
+@pytest.mark.asyncio
+async def test_rule_multiple_failed_2fa(db_session):
     """Test Rule: Multiple failed 2FA attempts (3+ in 5 minutes): +0.4"""
     print("\n✓ Test Rule: Multiple Failed 2FA Attempts")
 
@@ -158,7 +160,7 @@ def test_rule_multiple_failed_2fa(db_session):
         metadata={}
     )
 
-    assessment = detector.analyze_event(new_event, db)
+    assessment = await detector.analyze_event(new_event, db)
 
     assert assessment.risk_score >= 0.4, f"Risk score should be at least 0.4, got {assessment.risk_score}"
     assert "2fa" in assessment.reason.lower()
@@ -166,7 +168,8 @@ def test_rule_multiple_failed_2fa(db_session):
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_rule_ip_address_change(db_session):
+@pytest.mark.asyncio
+async def test_rule_ip_address_change(db_session):
     """Test Rule: IP address change from previous login: +0.2"""
     print("\n✓ Test Rule: IP Address Change")
 
@@ -201,7 +204,7 @@ def test_rule_ip_address_change(db_session):
         metadata={}
     )
 
-    assessment = detector.analyze_event(new_event, db)
+    assessment = await detector.analyze_event(new_event, db)
 
     assert assessment.risk_score >= 0.2, f"Risk score should be at least 0.2, got {assessment.risk_score}"
     assert "ip address changed" in assessment.reason.lower()
@@ -209,7 +212,8 @@ def test_rule_ip_address_change(db_session):
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_rule_user_agent_change(db_session):
+@pytest.mark.asyncio
+async def test_rule_user_agent_change(db_session):
     """Test Rule: User agent change from previous login: +0.1"""
     print("\n✓ Test Rule: User Agent Change")
 
@@ -244,7 +248,7 @@ def test_rule_user_agent_change(db_session):
         metadata={}
     )
 
-    assessment = detector.analyze_event(new_event, db)
+    assessment = await detector.analyze_event(new_event, db)
 
     assert assessment.risk_score >= 0.1, f"Risk score should be at least 0.1, got {assessment.risk_score}"
     assert "user agent changed" in assessment.reason.lower()
@@ -252,7 +256,8 @@ def test_rule_user_agent_change(db_session):
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_combined_rules(db_session):
+@pytest.mark.asyncio
+async def test_combined_rules(db_session):
     """Test multiple rules triggering together"""
     print("\n✓ Test Combined Rules")
 
@@ -302,7 +307,7 @@ def test_combined_rules(db_session):
         metadata={}
     )
 
-    assessment = detector.analyze_event(new_event, db)
+    assessment = await detector.analyze_event(new_event, db)
 
     # Should have: 0.3 (failed logins) + 0.2 (IP change) + 0.1 (UA change) = 0.6
     assert assessment.risk_score >= 0.6, f"Risk score should be at least 0.6, got {assessment.risk_score}"
@@ -313,7 +318,8 @@ def test_combined_rules(db_session):
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Reason: {assessment.reason}")
 
 
-def test_alert_threshold(db_session):
+@pytest.mark.asyncio
+async def test_alert_threshold(db_session):
     """Test that alert flag is set when risk_score >= threshold"""
     print("\n✓ Test Alert Threshold")
 
@@ -378,7 +384,7 @@ def test_alert_threshold(db_session):
         metadata={}
     )
 
-    assessment = detector.analyze_event(new_event, db)
+    assessment = await detector.analyze_event(new_event, db)
 
     # Should have: 0.3 (failed logins) + 0.4 (failed 2FA) + 0.2 (IP change) + 0.1 (UA change) = 1.0 (capped)
     assert assessment.risk_score >= 0.7, f"Risk score should be >= 0.7, got {assessment.risk_score}"
@@ -429,7 +435,8 @@ def test_event_persistence_with_fraud_analysis(db_session, test_client):
     print(f"  Verified: Event stored with risk_score={stored_event.risk_score:.2f}, reason='{stored_event.fraud_reason}'")
 
 
-def test_normal_authentication_pattern(db_session):
+@pytest.mark.asyncio
+async def test_normal_authentication_pattern(db_session):
     """Test that normal authentication has low risk score"""
     print("\n✓ Test Normal Authentication Pattern")
 
@@ -464,55 +471,10 @@ def test_normal_authentication_pattern(db_session):
         metadata={}
     )
 
-    assessment = detector.analyze_event(new_event, db)
+    assessment = await detector.analyze_event(new_event, db)
 
     assert assessment.risk_score == 0.0, f"Risk score should be 0.0 for normal pattern, got {assessment.risk_score}"
     assert assessment.email_notification is False, "Email notification should be False for normal pattern"
     assert "normal" in assessment.reason.lower()
 
     print(f"  Verified: Risk score = {assessment.risk_score:.2f}, Email notification = {assessment.email_notification}")
-
-
-if __name__ == "__main__":
-    print("=" * 60)
-    print("Task 5: Fraud Detection Engine Verification")
-    print("=" * 60)
-
-    try:
-        test_fraud_assessment_model()
-        test_fraud_detector_initialization()
-        test_rule_multiple_failed_logins()
-        test_rule_multiple_failed_2fa()
-        test_rule_ip_address_change()
-        test_rule_user_agent_change()
-        test_combined_rules()
-        test_alert_threshold()
-        test_event_persistence_with_fraud_analysis()
-        test_normal_authentication_pattern()
-
-        print("\n" + "=" * 60)
-        print("✓ ALL FRAUD DETECTION TESTS PASSED")
-        print("=" * 60)
-        print("\nTask 5 Implementation Summary:")
-        print("  ✓ Created fraud_detector.py with FraudDetector class")
-        print("  ✓ Created FraudAssessment model with risk_score, alert, reason")
-        print("  ✓ Implemented _rule_based_analysis with all scoring rules:")
-        print("    - Multiple failed login attempts (3+ in 5 min): +0.3")
-        print("    - Multiple failed 2FA attempts (3+ in 5 min): +0.4")
-        print("    - IP address change: +0.2")
-        print("    - User agent change: +0.1")
-        print("  ✓ Implemented helper methods for querying recent events")
-        print("  ✓ Integrated fraud detection into event ingestion")
-        print("  ✓ MCPAuthEvent updated with risk_score and fraud_reason")
-        print("  ✓ Requirements 3.1, 3.2, 3.3, 3.4, 3.5 satisfied")
-
-    except AssertionError as e:
-        print(f"\n✗ Test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n✗ Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)

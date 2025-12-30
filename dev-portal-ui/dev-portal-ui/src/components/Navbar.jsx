@@ -11,10 +11,10 @@ export default function Navbar() {
     <nav>
       <Link to="/tickets">Tickets</Link>{" | "}
       <Link to="/account">Account</Link>{" | "}
-      {auth.tier === 'Pro' && (
+      <Link to="/apikeys">API Keys</Link>{" | "}
+      {auth.tier === 'pro' && (
         <>
           <Link to="/dashboard">Dashboard</Link>{" | "}
-          <Link to="/apikeys">API Keys</Link>{" | "}
         </>
       )}
       <button onClick={() => { logout(); navigate('/'); }}>Logout</button>

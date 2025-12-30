@@ -9,9 +9,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from auth_platform.auth_platform.auth_service.routes import dev_monitor
-from auth_platform.auth_platform.auth_service.models import AuthEvent, User
-from auth_platform.auth_platform.auth_service.db import Base, engine, get_db
+from auth_platform.auth_service.routes import dev_monitor
+from auth_platform.auth_service.models import AuthEvent, User
+from auth_platform.auth_service.db import Base, engine, get_db
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -100,7 +100,7 @@ def client(test_app):
 def test_endpoint_returns_events_when_dev_mode_enabled_and_local_ip(client, test_events):
     """Test endpoint returns events when DEV_MODE=true and local IP."""
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get("/dev/event-logs")
 
             assert response.status_code == 200
@@ -130,7 +130,7 @@ def test_endpoint_returns_200_when_request_from_external_ip_in_dev_mode(client, 
     """Test endpoint returns 200 when request from external IP in DEV_MODE (logs but allows)."""
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
         # Mock the request to have an external IP
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=False):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=False):
             response = client.get("/dev/event-logs")
 
             # In DEV_MODE, external IPs are allowed (just logged)
@@ -142,7 +142,7 @@ def test_endpoint_returns_200_when_request_from_external_ip_in_dev_mode(client, 
 def test_endpoint_returns_400_when_limit_exceeds_1000(client, test_events):
     """Test endpoint returns 400 when limit exceeds 1000."""
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get("/dev/event-logs?limit=2000")
 
             assert response.status_code == 400
@@ -175,7 +175,7 @@ def test_filtering_by_event_type_works_correctly(client, db_session, test_user):
     db_session.commit()
 
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get("/dev/event-logs?event_type=login_success")
 
             assert response.status_code == 200
@@ -217,7 +217,7 @@ def test_filtering_by_user_id_works_correctly(client, db_session):
     db_session.commit()
 
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get(f"/dev/event-logs?user_id={user1.id}")
 
             assert response.status_code == 200
@@ -269,7 +269,7 @@ def test_combining_event_type_and_user_id_filters(client, db_session):
     db_session.commit()
 
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get(f"/dev/event-logs?user_id={user1.id}&event_type=login_success")
 
             assert response.status_code == 200
@@ -300,7 +300,7 @@ def test_events_are_ordered_by_timestamp_descending(client, db_session, test_use
         time.sleep(0.01)  # Small delay to ensure different timestamps
 
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get("/dev/event-logs")
 
             assert response.status_code == 200
@@ -327,7 +327,7 @@ def test_endpoint_respects_limit_parameter(client, db_session, test_user):
     db_session.commit()
 
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get("/dev/event-logs?limit=5")
 
             assert response.status_code == 200
@@ -351,7 +351,7 @@ def test_endpoint_uses_default_limit_of_50(client, db_session, test_user):
     db_session.commit()
 
     with patch.dict(os.environ, {"DEV_MODE": "true"}):
-        with patch("auth_platform.auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
+        with patch("auth_platform.auth_service.routes.dev_monitor.is_local_request", return_value=True):
             response = client.get("/dev/event-logs")
 
             assert response.status_code == 200

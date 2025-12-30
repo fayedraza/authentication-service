@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
-from auth_platform.auth_platform.auth_service.main import app
-from auth_platform.auth_platform.auth_service.db import Base, engine, SessionLocal
-from auth_platform.auth_platform.auth_service.models import User, PasswordResetToken, AuthEvent
-from auth_platform.auth_platform.auth_service.auth import hash_password
+from auth_platform.auth_service.main import app
+from auth_platform.auth_service.db import Base, engine, SessionLocal
+from auth_platform.auth_service.models import User, PasswordResetToken, AuthEvent
+from auth_platform.auth_service.auth import hash_password
 import time
 from datetime import datetime, timedelta
 

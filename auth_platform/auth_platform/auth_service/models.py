@@ -37,6 +37,13 @@ class Ticket(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=False)
     status = Column(String, default="open", nullable=False)
+
+    # New fields for AI Analysis
+    priority = Column(String, default="medium", nullable=False)
+    category = Column(String, nullable=True)
+    escalated = Column(Boolean, default=False, nullable=False)
+    escalation_reason = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     owner = relationship("User", back_populates="tickets")
@@ -57,7 +64,7 @@ class AuthEvent(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     username = Column(String, nullable=False)
     event_type = Column(
-        Enum("login_success", "login_failure", "2fa_success", "2fa_failure", "password_reset",
+        Enum("login_success", "login_failure", "2fa_success", "2fa_failure", "password_reset", "login_blocked_fraud",
              name="auth_event_type"),
         nullable=False
     )
@@ -91,3 +98,21 @@ class AuthEvent(Base):
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "metadata": self.event_metadata or {}
         }
+
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    key_hash = Column(String, nullable=False, index=True)
+    key_prefix = Column(String, nullable=False)
+    label = Column(String, nullable=False)
+    status = Column(String, default="active", nullable=False)  # active, revoked
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    owner = relationship("User", back_populates="api_keys")
+
+
+# Add relationship to User model
+User.api_keys = relationship("ApiKey", back_populates="owner", cascade="all, delete-orphan")

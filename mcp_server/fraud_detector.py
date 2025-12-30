@@ -17,7 +17,7 @@ import logging
 
 from mcp_server.models import MCPAuthEvent
 from mcp_server.schemas import AuthEventIn
-from mcp_server.baml_client import get_baml_client, LoginEvent as BAMLLoginEvent
+from mcp_server.baml_wrapper import get_baml_client, LoginEvent as BAMLLoginEvent
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class FraudDetector:
                 f"(threshold: {fraud_threshold})"
             )
 
-    def analyze_event(self, event: AuthEventIn, db: Session) -> FraudAssessment:
+    async def analyze_event(self, event: AuthEventIn, db: Session) -> FraudAssessment:
         """
         Analyze an authentication event and return fraud assessment.
 
@@ -110,21 +110,31 @@ class FraudDetector:
         try:
             # Try BAML analysis if enabled
             if self.baml_enabled and self.baml_client and self.baml_client.is_available():
-                logger.debug(f"Attempting BAML analysis for user {event.user_id}")
-                assessment = self._baml_analysis(event, db)
-
-                if assessment is not None:
-                    logger.info(
-                        f"BAML fraud analysis complete for user {event.user_id}: "
-                        f"risk_score={assessment.risk_score:.2f}, email_notification={assessment.email_notification}, "
-                        f"confidence={assessment.confidence:.2f}"
-                    )
-                    return assessment
-
-                logger.warning(
-                    f"BAML analysis failed for user {event.user_id}, "
-                    "falling back to rule-based detection"
+                # Rate Limiting: Check if we've already done an AI analysis recently
+                recent_baml = self._check_recent_baml_analysis(
+                    db=db,
+                    user_id=event.user_id,
+                    minutes=5
                 )
+
+                if recent_baml:
+                    logger.info(f"Skipping BAML analysis for user {event.user_id} (rate limit active)")
+                else:
+                    logger.debug(f"Attempting BAML analysis for user {event.user_id}")
+                    assessment = await self._baml_analysis(event, db)
+
+                    if assessment is not None:
+                        logger.info(
+                            f"BAML fraud analysis complete for user {event.user_id}: "
+                            f"risk_score={assessment.risk_score:.2f}, email_notification={assessment.email_notification}, "
+                            f"confidence={assessment.confidence:.2f}"
+                        )
+                        return assessment
+
+                    logger.warning(
+                        f"BAML analysis failed for user {event.user_id}, "
+                        "falling back to rule-based detection"
+                    )
 
             # Fall back to rule-based analysis
             assessment = self._rule_based_analysis(event, db)
@@ -144,7 +154,7 @@ class FraudDetector:
                 confidence=0.0
             )
 
-    def _baml_analysis(self, event: AuthEventIn, db: Session) -> Optional[FraudAssessment]:
+    async def _baml_analysis(self, event: AuthEventIn, db: Session) -> Optional[FraudAssessment]:
         """
         Perform AI-powered fraud detection using BAML agent.
 
@@ -217,8 +227,8 @@ class FraudDetector:
                 user_agent_changed=ua_changed
             )
 
-            # Call BAML agent (synchronous wrapper)
-            baml_result = self.baml_client.analyze_fraud_sync(baml_event)
+            # Call BAML agent (async)
+            baml_result = await self.baml_client.analyze_fraud(baml_event)
 
             if baml_result is None:
                 logger.warning("BAML analysis returned None")
@@ -260,8 +270,6 @@ class FraudDetector:
 
         # Parse event timestamp (remove timezone info for comparison with database timestamps)
         event_time = datetime.fromisoformat(event.timestamp.replace('Z', '+00:00'))
-        if event_time.tzinfo is not None:
-            event_time = event_time.replace(tzinfo=None)
 
         # Rule 1: Multiple failed login attempts (3+ in 5 minutes)
         # Scales with number of attempts: 3-5 attempts = +0.3, 6-10 = +0.5, 11+ = +0.7
@@ -483,3 +491,35 @@ class FraudDetector:
         except Exception as e:
             logger.error(f"Error getting recent events: {e}")
             return []
+
+    def _check_recent_baml_analysis(
+        self,
+        db: Session,
+        user_id: int,
+        minutes: int = 5
+    ) -> bool:
+        """
+        Check if a BAML analysis was performed for this user recently.
+
+        Args:
+            db: Database session
+            user_id: User ID to check
+            minutes: Time window in minutes
+
+        Returns:
+            True if a recent BAML analysis exists, False otherwise
+        """
+        try:
+            since = datetime.utcnow() - timedelta(minutes=minutes)
+
+            # Check for events where fraud_reason starts with "[BAML]"
+            count = db.query(MCPAuthEvent).filter(
+                MCPAuthEvent.user_id == user_id,
+                MCPAuthEvent.timestamp >= since,
+                MCPAuthEvent.fraud_reason.like("[BAML]%")
+            ).count()
+
+            return count > 0
+        except Exception as e:
+            logger.error(f"Error checking recent BAML analysis: {e}")
+            return False

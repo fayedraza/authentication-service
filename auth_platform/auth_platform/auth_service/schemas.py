@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from typing import Literal, Optional
+from datetime import datetime
 
 class UserCreate(BaseModel):
     username: str
@@ -76,6 +77,28 @@ class TicketResponse(BaseModel):
     title: str
     description: str
     status: str
+    priority: str
+    category: Optional[str] = None
+    escalated: bool
+    escalation_reason: Optional[str] = None
+    created_at: Optional[datetime] = None  # To match main.py return
+
+    class Config:
+        from_attributes = True
+
+
+# API Keys
+class ApiKeyCreate(BaseModel):
+    label: str
+
+
+class ApiKeyResponse(BaseModel):
+    id: int
+    label: str
+    key_prefix: str
+    status: str
+    created_at: datetime
+    key: Optional[str] = None  # Only returned on creation/rotation
 
     class Config:
         from_attributes = True

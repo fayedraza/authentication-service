@@ -4,9 +4,9 @@ Unit tests for event logger utility.
 import pytest
 from unittest.mock import Mock, MagicMock
 from sqlalchemy.exc import SQLAlchemyError
-from auth_platform.auth_platform.auth_service.utils.event_logger import log_auth_event
-from auth_platform.auth_platform.auth_service.models import AuthEvent, User
-from auth_platform.auth_platform.auth_service.db import Base, engine
+from auth_platform.auth_service.utils.event_logger import log_auth_event
+from auth_platform.auth_service.models import AuthEvent, User
+from auth_platform.auth_service.db import Base, engine
 from sqlalchemy.orm import Session
 
 
@@ -350,11 +350,11 @@ def test_mcp_push_disabled_by_env_var(db_session, test_user, mock_request, monke
 
     # Reload the module to pick up new env var
     import importlib
-    from auth_platform.auth_platform.auth_service.utils import event_logger
+    from auth_platform.auth_service.utils import event_logger
     importlib.reload(event_logger)
 
     # Mock httpx to ensure it's not called
-    with patch("auth_platform.auth_platform.auth_service.utils.event_logger.httpx.AsyncClient") as mock_client:
+    with patch("auth_platform.auth_service.utils.event_logger.httpx.AsyncClient") as mock_client:
         event_logger.log_auth_event("login_success", test_user, mock_request, db_session)
 
         # Verify httpx was not called since MCP push is disabled
@@ -376,11 +376,11 @@ def test_mcp_push_handles_connection_error(db_session, test_user, mock_request, 
 
     # Reload the module to pick up new env var
     import importlib
-    from auth_platform.auth_platform.auth_service.utils import event_logger
+    from auth_platform.auth_service.utils import event_logger
     importlib.reload(event_logger)
 
     # Mock httpx to raise ConnectError
-    with patch("auth_platform.auth_platform.auth_service.utils.event_logger.httpx.AsyncClient") as mock_client:
+    with patch("auth_platform.auth_service.utils.event_logger.httpx.AsyncClient") as mock_client:
         mock_context = AsyncMock()
         mock_context.__aenter__.return_value.post = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
         mock_client.return_value = mock_context

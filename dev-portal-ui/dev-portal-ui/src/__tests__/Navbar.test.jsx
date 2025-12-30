@@ -6,7 +6,7 @@ const mockLogout = jest.fn();
 const mockNavigate = jest.fn();
 
 jest.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ auth: { tier: 'Pro' }, logout: mockLogout }),
+  useAuth: () => ({ auth: { tier: 'pro' }, logout: mockLogout }),
 }));
 
 describe('Navbar', () => {
@@ -18,14 +18,14 @@ describe('Navbar', () => {
   test('shows links for Pro tier and calls logout + navigate on click', () => {
     render(<Navbar />);
 
-  expect(screen.getByText(/Tickets/i)).toBeInTheDocument();
-  expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
-  expect(screen.getByText(/API Keys/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tickets/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
+    expect(screen.getByText(/API Keys/i)).toBeInTheDocument();
 
-  const logoutBtn = screen.getByRole('button', { name: /logout/i });
-  fireEvent.click(logoutBtn);
+    const logoutBtn = screen.getByRole('button', { name: /logout/i });
+    fireEvent.click(logoutBtn);
 
-  // ensure logout is triggered; navigation is handled by react-router in the app
-  expect(mockLogout).toHaveBeenCalled();
+    // ensure logout is triggered; navigation is handled by react-router in the app
+    expect(mockLogout).toHaveBeenCalled();
   });
 });
