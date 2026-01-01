@@ -53,11 +53,39 @@ pytest tests/test_e2e_simple.py -v -s --log-cli-level=INFO
 
 ### Manual Testing with Insomnia/Postman
 
-Use the provided Insomnia collections:
-- `complete-insomnia-collection.json` - Full API testing
-- `mcp_server/email-notification-insomnia.json` - Email notification testing
+### Manual Testing with Insomnia/Postman
 
-Import into Insomnia and test the APIs while services are running.
+We provide a comprehensive Insomnia collection for manual testing and debugging.
+
+**File:** `complete-insomnia-collection.json` (Root directory)
+
+**Importing:**
+1. Open Insomnia
+2. Click "Create" -> "Import"
+3. Select the `complete-insomnia-collection.json` file
+
+**Capabilities:**
+This collection covers all major workflows:
+- **Auth Flow**: Register, Login, Token Management
+- **2FA**: Enrollment, Verification
+- **Tickets**: Creation, AI Analysis (Priority/Escalation)
+- **MCP**: Event Ingestion, Fraud Assessments
+- **AI Testing**: Dedicated folders for testing AI behaviors
+
+**AI Testing Scenarios:**
+The collection includes specific requests to test the AI integration (Groq/Gemini):
+1. **Ticket Automation**:
+   - *Create Critical Security Ticket*: Triggers "System Breach" logic (High Priority + Escalation).
+   - *Create General Inquiry*: Triggers standard "How-to" logic (Low/Medium Priority).
+2. **Fraud Simulation**:
+   - *Ingest Suspicious Agent*: Sends `sqlmap` user-agent to trigger high-risk fraud assessment.
+   - *Ingest Tor Exit Node*: Sends known Tor IP to trigger fraud detection.
+
+**Verifying AI vs. Rule-Based:**
+Check the `fraud_reason` field in the response:
+- `[BAML:groq] ...` -> Analysis by Groq AI
+- `[BAML:gemini] ...` -> Analysis by Gemini AI
+- `[Rule] ...` -> Fallback to internal rules mechanism
 
 ## Verifying Email Notifications
 

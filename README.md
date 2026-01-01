@@ -157,3 +157,8 @@ poetry run pytest -q
 - You may see a few deprecation warnings from dependencies (FastAPI on_event, SQLAlchemy declarative_base, datetime usage). These do not affect functionality but can be cleaned up later.
 
 If you want, I can add a `/health` endpoint, fix the deprecation warnings, or update this README with more developer notes. Let me know which you'd like next.
+
+## Documentation
+
+- [Testing Guide & Insomnia Usage](TESTING-GUIDE.md)
+- [Developer SDK Guide](DEVELOP_SDK_GUIDE.md)
