@@ -12,6 +12,9 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 
+import os
+import json
+
 from mcp_server.baml_client.types import LoginEvent
 
 # Try to import BAML generated client at module level
@@ -154,14 +157,52 @@ class BAMLClient:
             )
             return None
 
+        if not self._client:
+            logger.error("BAML client not initialized")
+            return None
+
+        # Retry Config
+        max_retries = 3
+        base_delay = 2
+
+        ai_model = os.environ.get("AI_MODEL", "groq").lower()
+
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "model": ai_model,
+            "user_id": event.user_id,
+            "event_type": event.event_type,
+            "risk_score": None,
+            "confidence": None,
+            "alert": False,
+            "reason": None,
+            "error": None
+        }
+
         try:
-            # Call BAML agent with timeout
+            # Call BAML agent with retry logic
             logger.debug(f"Calling BAML fraud detection for user {event.user_id}")
 
-            # Call the BAML-generated function
-            # The actual implementation depends on BAML code generation
-            # Note: timeout is configured in BAML client initialization
-            result = await self._client.FraudCheck(event)
+            result = None
+            for attempt in range(max_retries):
+                try:
+                    if ai_model == "gemini":
+                        logger.info(f"Using Gemini model for fraud check (AI_MODEL={ai_model}) - Attempt {attempt+1}/{max_retries}")
+                        result = await self._client.FraudCheckGemini(event)
+                    else:
+                        logger.info(f"Using Groq model for fraud check (AI_MODEL={ai_model}) - Attempt {attempt+1}/{max_retries}")
+                        result = await self._client.FraudCheck(event)
+                    break # Success
+                except Exception as e:
+                    # Check for 429 in message string since exception type might be generic BamlClientHttpError
+                    err_msg = str(e)
+                    if "429" in err_msg or "Too Many Requests" in err_msg:
+                        if attempt < max_retries - 1:
+                            wait_time = base_delay * (2 ** attempt)
+                            logger.warning(f"Rate limited. Retrying in {wait_time}s...")
+                            await asyncio.sleep(wait_time)
+                            continue
+                    raise e # Re-raise if not 429 or max retries reached
 
             # Convert BAML result to our assessment format
             assessment = BAMLFraudAssessment(
@@ -171,6 +212,16 @@ class BAMLClient:
                 confidence=float(result.confidence)
             )
 
+            # Update log entry
+            log_entry.update({
+                "risk_score": assessment.risk_score,
+                "confidence": assessment.confidence,
+                "alert": assessment.alert,
+                "reason": assessment.reason
+            })
+
+            self._log_response(ai_model, log_entry)
+
             logger.info(
                 f"BAML fraud analysis complete for user {event.user_id}: "
                 f"risk_score={assessment.risk_score:.2f}, confidence={assessment.confidence:.2f}"
@@ -179,17 +230,34 @@ class BAMLClient:
             return assessment
 
         except TimeoutError:
+            log_entry["error"] = "TimeoutError"
+            self._log_response(ai_model, log_entry)
             logger.warning(
                 f"BAML fraud analysis timed out after {self.timeout_ms}ms "
                 f"for user {event.user_id}"
             )
             return None
         except Exception as e:
+            log_entry["error"] = str(e)
+            self._log_response(ai_model, log_entry)
             logger.error(
                 f"Error during BAML fraud analysis for user {event.user_id}: {e}",
                 exc_info=True
             )
             return None
+
+    def _log_response(self, ai_model: str, log_entry: dict):
+        """Helper to log AI response (or error) to file."""
+        try:
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            log_dir = os.path.join(project_root, "logs", ai_model, "mcp_server")
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = os.path.join(log_dir, "results.log")
+
+            with open(log_path, "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception as e:
+            logger.error(f"Failed to write to log file: {e}")
 
     def analyze_fraud_sync(self, event: LoginEvent) -> Optional[BAMLFraudAssessment]:
         """

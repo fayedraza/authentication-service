@@ -1,10 +1,4 @@
-client<llm> Gemini {
-  provider google-ai
-  options {
-    model "gemini-2.5-flash"
-    api_key env.GEMINI_API_KEY
-  }
-}
+
 
 client<llm> Groq {
   provider openai-generic
@@ -15,8 +9,16 @@ client<llm> Groq {
   }
 }
 
+client Gemini {
+  provider google-ai
+  options {
+    model "gemini-2.5-flash"
+    api_key env.GEMINI_API_KEY
+  }
+}
+
 generator target {
   output_type "python/pydantic"
-  output_dir "../"
+  output_dir "../../auth_platform"
   version "0.216.0"
 }

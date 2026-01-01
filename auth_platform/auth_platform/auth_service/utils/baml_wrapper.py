@@ -1,9 +1,35 @@
 
+import json
 import logging
 import os
 from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
+
+def get_log_path(model: str, functionality: str) -> str:
+    # Go up 3 levels from auth_service/utils/baml_wrapper.py to auth_platform root
+    # Then up one more to project root where logs/ is mounted
+    # Current file: auth_platform/auth_platform/auth_service/utils/baml_wrapper.py
+    # .../utils -> .../auth_service -> .../auth_platform -> .../auth_platform(root) -> project_root
+
+    # Actually, simpler to just assume we are in Docker working dir /app
+    # But usually creating a logs dir relative to the project root is safer if mounted.
+    # In Docker, WORKDIR is /app. We can log to /app/logs if mounted there.
+    # Or navigate relative to __file__.
+
+    # Let's use relative path from this file to ensure we hit the mounted volume.
+    # This file is in .../auth_platform/auth_service/utils/
+    # We want to write to .../logs (if mounted at root of auth_platform).
+    # Wait, the plan says "Mount the logs/ directory to both mcp_server and auth_platform".
+    # In docker-compose, for auth_platform, generated code is in /app (WORKDIR).
+    # We should mount logs to /app/logs.
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
+    # This might be brittle. Let's just use "logs" in current working directory which is /app.
+
+    log_dir = os.path.join(os.getcwd(), "logs", model, functionality)
+    os.makedirs(log_dir, exist_ok=True)
+    return os.path.join(log_dir, "results.log")
 
 # Try to import baml_client at module level
 try:
@@ -113,19 +139,31 @@ class BamlTicketAgent:
             return self._mock_analysis(title, description, owner_tier)
 
         try:
+            ai_model = os.environ.get("AI_MODEL", "groq").lower()
+            logger.info(f"Using {ai_model} model for ticket escalation.")
+
             # Map input to dictionary as BAML expects
-            # Note: exact signature depends on generated code, passing args directly
-            result = await self._client.TicketEscalation(
-                ticket_id=ticket_id,
-                title=title,
-                description=description,
-                owner_tier=owner_tier,
-                created_at=created_at,
-                owner_history=owner_context
-            )
+            if ai_model == "gemini":
+                result = await self._client.TicketEscalationGemini(
+                    ticket_id=ticket_id,
+                    title=title,
+                    description=description,
+                    owner_tier=owner_tier,
+                    created_at=created_at,
+                    owner_history=owner_context
+                )
+            else:
+                result = await self._client.TicketEscalation(
+                    ticket_id=ticket_id,
+                    title=title,
+                    description=description,
+                    owner_tier=owner_tier,
+                    created_at=created_at,
+                    owner_history=owner_context
+                )
 
             # Map result back to our DTO
-            return TicketAnalysis(
+            ticket_analysis = TicketAnalysis(
                 priority=result.priority,
                 category=result.category,
                 escalate=result.escalate,
@@ -136,6 +174,23 @@ class BamlTicketAgent:
                 customer_impact_level=result.customer_impact_level,
                 recommended_assignee=result.recommended_assignee
             )
+
+            # Log result
+            try:
+                log_path = get_log_path(ai_model, "ticket_escalation")
+                log_entry = {
+                    "ticket_id": ticket_id,
+                    "title": title,
+                    "priority": ticket_analysis.priority,
+                    "model": ai_model,
+                    "timestamp": created_at
+                }
+                with open(log_path, "a") as f:
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception as e:
+                logger.error(f"Failed to log ticket analysis: {e}")
+
+            return ticket_analysis
 
         except Exception as e:
             logger.error(f"Error calling BAML TicketEscalation: {e}")
@@ -208,26 +263,31 @@ class BamlFraudAgent:
              return self._mock_analysis(username, ip_address)
 
         try:
-            # Map AuthEvent objects to dicts if needed, or rely on BAML client handling objects
-            # Assuming BAML client expects objects or dicts matching schema
-            # We'll convert to what the generated client typically expects (often kwargs or objects)
-            # But here `recent_events` is a list of objects. Generated client matches BAML types.
+            ai_model = os.environ.get("AI_MODEL", "groq").lower()
+            logger.info(f"Using {ai_model} model for fraud detection.")
 
-            # Note: generated client usually takes Pydantic models or similar structures.
-            # We might need to map our DTOs to BAML types if they are strict.
-            # checks args: user_id, username, event_type, ip_address, user_agent, timestamp, recent_events
+            if ai_model == "gemini":
+                result = await self._client.FraudDetectionGemini(
+                    user_id=user_id,
+                    username=username,
+                    event_type=event_type,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    timestamp=timestamp,
+                    recent_events=recent_events
+                )
+            else:
+                result = await self._client.FraudDetection(
+                    user_id=user_id,
+                    username=username,
+                    event_type=event_type,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    timestamp=timestamp,
+                    recent_events=recent_events
+                )
 
-            result = await self._client.FraudDetection(
-                user_id=user_id,
-                username=username,
-                event_type=event_type,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                timestamp=timestamp,
-                recent_events=recent_events # Pass list of AuthEvent
-            )
-
-            return FraudAssessment(
+            fraud_assessment = FraudAssessment(
                 risk_level=result.risk_level,
                 risk_score=result.risk_score,
                 action=result.action,
@@ -235,6 +295,25 @@ class BamlFraudAgent:
                 confidence=result.confidence,
                 risk_factors=result.risk_factors
             )
+
+            # Log result
+            try:
+                log_path = get_log_path(ai_model, "fraud_detection")
+                log_entry = {
+                    "user_id": user_id,
+                    "event_type": event_type,
+                    "risk_score": fraud_assessment.risk_score,
+                    "action": fraud_assessment.action,
+                    "model": ai_model,
+                    "timestamp": timestamp
+                }
+                with open(log_path, "a") as f:
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception as e:
+                logger.error(f"Failed to log fraud assessment: {e}")
+
+            return fraud_assessment
+
         except Exception as e:
             logger.error(f"Error calling BAML FraudDetection: {e}")
             return self._mock_analysis(username, ip_address)

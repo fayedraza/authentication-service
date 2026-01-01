@@ -522,7 +522,7 @@ BAML (Boundary ML) is a framework for defining AI agent schemas and prompts. The
 4. **Configure Environment Variables**:
    ```bash
    BAML_ENABLED=true
-   BAML_API_KEY=your_api_key_here
+   GEMINI_API_KEY=your_api_key_here
    BAML_TIMEOUT_MS=5000
    ```
 

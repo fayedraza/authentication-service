@@ -10,16 +10,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Load environment variables into os.environ for BAML client
-# Explicitly find and load the .env file to ensure BAML_API_KEY is available
+# Explicitly find and load the .env file to ensure GEMINI_API_KEY is available
 env_file = find_dotenv(usecwd=True)
 if env_file:
     # override=True ensures we pick up changes if the file was updated after process start
     load_dotenv(env_file, override=True)
     print(f"MCP Config: Loaded environment from {env_file}")
-    if "BAML_API_KEY" in os.environ:
-        print(f"MCP Config: BAML_API_KEY found (length: {len(os.environ['BAML_API_KEY'])})")
+    if "GEMINI_API_KEY" in os.environ:
+        print(f"MCP Config: GEMINI_API_KEY found (length: {len(os.environ['GEMINI_API_KEY'])})")
     else:
-        print("MCP Config: BAML_API_KEY NOT found in environment after loading .env")
+        print("MCP Config: GEMINI_API_KEY NOT found in environment after loading .env")
 else:
     print("MCP Config: No .env file found by find_dotenv()")
 

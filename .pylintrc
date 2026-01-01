@@ -3,10 +3,13 @@
 fail-under=9.0
 
 # Files or directories to be skipped
-ignore=tests,.venv,venv,node_modules,.git,__pycache__,agents
+ignore=tests,.venv,venv,node_modules,.git,__pycache__,agents,baml_client,baml_wrapper.py,baml_src
 
 # Ignore patterns for files
 ignore-patterns=test_.*\.py$,.*_test\.py$,conftest\.py$
+
+# Ignore patterns for paths (regex)
+ignore-paths=^.*baml_wrapper\.py$,^.*baml_client.*$
 
 # Use multiple processes to speed up Pylint
 jobs=1

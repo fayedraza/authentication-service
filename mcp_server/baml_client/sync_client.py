@@ -51,6 +51,7 @@ class BamlSyncClient:
     def with_options(self,
         tb: typing.Optional[type_builder.TypeBuilder] = None,
         client_registry: typing.Optional[baml_py.baml_py.ClientRegistry] = None,
+        client: typing.Optional[str] = None,
         collector: typing.Optional[typing.Union[baml_py.baml_py.Collector, typing.List[baml_py.baml_py.Collector]]] = None,
         env: typing.Optional[typing.Dict[str, typing.Optional[str]]] = None,
         tags: typing.Optional[typing.Dict[str, str]] = None,
@@ -61,6 +62,8 @@ class BamlSyncClient:
             options["tb"] = tb
         if client_registry is not None:
             options["client_registry"] = client_registry
+        if client is not None:
+            options["client"] = client
         if collector is not None:
             options["collector"] = collector
         if env is not None:
@@ -105,6 +108,20 @@ class BamlSyncClient:
                 "event": event,
             })
             return typing.cast(types.FraudAssessment, __result__.cast_to(types, types, stream_types, False, __runtime__))
+    def FraudCheckGemini(self, event: types.LoginEvent,
+        baml_options: BamlCallOptions = {},
+    ) -> types.FraudAssessment:
+        # Check if on_tick is provided
+        if 'on_tick' in baml_options:
+            __stream__ = self.stream.FraudCheckGemini(event=event,
+                baml_options=baml_options)
+            return __stream__.get_final_response()
+        else:
+            # Original non-streaming code
+            __result__ = self.__options.merge_options(baml_options).call_function_sync(function_name="FraudCheckGemini", args={
+                "event": event,
+            })
+            return typing.cast(types.FraudAssessment, __result__.cast_to(types, types, stream_types, False, __runtime__))
 
 
 
@@ -118,6 +135,18 @@ class BamlStreamClient:
         baml_options: BamlCallOptions = {},
     ) -> baml_py.BamlSyncStream[stream_types.FraudAssessment, types.FraudAssessment]:
         __ctx__, __result__ = self.__options.merge_options(baml_options).create_sync_stream(function_name="FraudCheck", args={
+            "event": event,
+        })
+        return baml_py.BamlSyncStream[stream_types.FraudAssessment, types.FraudAssessment](
+          __result__,
+          lambda x: typing.cast(stream_types.FraudAssessment, x.cast_to(types, types, stream_types, True, __runtime__)),
+          lambda x: typing.cast(types.FraudAssessment, x.cast_to(types, types, stream_types, False, __runtime__)),
+          __ctx__,
+        )
+    def FraudCheckGemini(self, event: types.LoginEvent,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.BamlSyncStream[stream_types.FraudAssessment, types.FraudAssessment]:
+        __ctx__, __result__ = self.__options.merge_options(baml_options).create_sync_stream(function_name="FraudCheckGemini", args={
             "event": event,
         })
         return baml_py.BamlSyncStream[stream_types.FraudAssessment, types.FraudAssessment](
@@ -141,6 +170,13 @@ class BamlHttpRequestClient:
             "event": event,
         }, mode="request")
         return __result__
+    def FraudCheckGemini(self, event: types.LoginEvent,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        __result__ = self.__options.merge_options(baml_options).create_http_request_sync(function_name="FraudCheckGemini", args={
+            "event": event,
+        }, mode="request")
+        return __result__
 
 
 class BamlHttpStreamRequestClient:
@@ -153,6 +189,13 @@ class BamlHttpStreamRequestClient:
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
         __result__ = self.__options.merge_options(baml_options).create_http_request_sync(function_name="FraudCheck", args={
+            "event": event,
+        }, mode="stream")
+        return __result__
+    def FraudCheckGemini(self, event: types.LoginEvent,
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        __result__ = self.__options.merge_options(baml_options).create_http_request_sync(function_name="FraudCheckGemini", args={
             "event": event,
         }, mode="stream")
         return __result__

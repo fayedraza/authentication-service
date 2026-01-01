@@ -14,8 +14,8 @@ async def test_ensure_ai_is_used_with_real_key(caplog):
     It asserts that the returned reason contains the '[BAML]' tag.
 
     EXPECTED BEHAVIOR:
-    - If a valid BAML_API_KEY is active: PASS ([BAML] tag present)
-    - If BAML_API_KEY is 'dummy' or missing: FAIL (Fallback to rules, no [BAML] tag)
+    - If a valid GEMINI_API_KEY is active: PASS ([BAML] tag present)
+    - If GEMINI_API_KEY is 'dummy' or missing: FAIL (Fallback to rules, no [BAML] tag)
     - If Rate Limited (429): PASS (Conceptually the key is valid, just out of quota)
     """
     import logging

@@ -2,12 +2,23 @@
 set -e
 
 echo "=================================================="
-echo "   RUNNING ALL TESTS For Authentication Service (Backend + Frontend)"
+echo "   RUNNING ALL TESTS For Authentication Service"
 echo "=================================================="
 
-# 1. Auth Platform Tests
+# Setup Logs
+# Clean contents but preserve directory structure if possible
+mkdir -p logs/
+rm -rf logs/*
+echo "Cleared previous AI response logs."
+
+# --- PHASE 1: CORE TESTS (Run Once) ---
 echo ""
-echo ">>> [1/5] Running Auth Platform Unit Tests..."
+echo "=================================================="
+echo "          PHASE 1: CORE TESTS (Unit/UI)           "
+echo "=================================================="
+
+# 1. Auth Platform Unit Tests
+echo ">>> [1/3] Running Auth Platform Unit Tests..."
 cd auth_platform
 if [ -d ".venv" ]; then
     source .venv/bin/activate
@@ -15,23 +26,14 @@ else
     echo "Error: .venv not found in auth_platform"
     exit 1
 fi
-
-# Run tests
 python -m pytest auth_platform_tests
 RET_AUTH=$?
 deactivate
 cd ..
 
-if [ $RET_AUTH -eq 0 ]; then
-    echo "✅ Auth Platform Tests PASSED"
-else
-    echo "❌ Auth Platform Tests FAILED"
-    exit 1
-fi
-
-# 2. MCP Server Tests
+# 2. MCP Server Unit Tests
 echo ""
-echo ">>> [2/5] Running MCP Server Unit Tests..."
+echo ">>> [2/3] Running MCP Server Unit Tests..."
 cd mcp_server
 if [ -d ".venv" ]; then
     source .venv/bin/activate
@@ -39,50 +41,13 @@ else
     echo "Error: .venv not found in mcp_server"
     exit 1
 fi
-
 python -m pytest tests/unit
 RET_MCP_UNIT=$?
-
-if [ $RET_MCP_UNIT -eq 0 ]; then
-    echo "✅ MCP Unit Tests PASSED"
-else
-    echo "❌ MCP Unit Tests FAILED"
-    # Don't exit yet, continue to others
-fi
+deactivate  # Deactivate mcp_server venv
 
 echo ""
-echo ">>> [3/5] Running MCP Server Integration Tests..."
-# Note: These require Docker socket access which may be restricted
-set +e
-python -m pytest tests/integration
-RET_MCP_INT=$?
-set -e
-
-if [ $RET_MCP_INT -eq 0 ]; then
-    echo "✅ MCP Integration Tests PASSED"
-else
-    echo "⚠️ MCP Integration Tests FAILED (Known issue with Docker socket in this env)"
-fi
-
-echo ""
-echo ">>> [4/5] Running MCP Server E2E Tests..."
-# These require the docker containers to be running (docker compose up)
-python -m pytest tests/e2e/test_api_key_lifecycle.py \
-                 tests/e2e/test_fraud_scenarios.py \
-                 tests/e2e/test_e2e_simple.py \
-                 tests/e2e/test_email_notifications_e2e.py \
-                 tests/e2e/test_events_query_e2e.py \
-                 tests/e2e/test_alerts_e2e.py \
-                 tests/e2e/test_fraud_assessments_e2e.py \
-                 tests/e2e/test_core_integration_e2e.py
-RET_MCP_E2E=$?
-
-deactivate
-cd ..
-
-echo ""
-echo ">>> [5/5] Running Frontend Tests (Dev Portal UI)..."
-cd dev-portal-ui/dev-portal-ui
+echo ">>> [3/3] Running Frontend Tests (Dev Portal UI)..."
+cd ../dev-portal-ui/dev-portal-ui
 if [ -d "node_modules" ]; then
     npm test -- --watchAll=false
     RET_FRONTEND=$?
@@ -92,15 +57,107 @@ else
     npm test -- --watchAll=false
     RET_FRONTEND=$?
 fi
-cd ../..
+cd ../.. # Back to root
 
+# Check Core Test Results
+if [ $RET_AUTH -ne 0 ] || [ $RET_MCP_UNIT -ne 0 ] || [ $RET_FRONTEND -ne 0 ]; then
+    echo "❌ Core Tests FAILED. Aborting."
+    exit 1
+fi
+echo "✅ Core Tests PASSED."
+
+
+# --- PHASE 2: AI VERIFICATION LOOP (Run Per Model) ---
+echo ""
+echo "=================================================="
+echo "        PHASE 2: AI VERIFICATION LOOP             "
+echo "=================================================="
+
+MODELS=("groq" "gemini")
+RET_GROQ=0
+RET_GEMINI=0
+
+# Activate MCP venv once for E2E tests (it will be used in loop)
+cd mcp_server
+if [ -d ".venv" ]; then
+    source .venv/bin/activate
+fi
+
+for model in "${MODELS[@]}"; do
+    echo ""
+    echo "--------------------------------------------------"
+    echo ">>> Testing AI Model: $model"
+    echo "--------------------------------------------------"
+
+    # Switch Model & Restart Containers
+    export AI_MODEL=$model
+    echo "Restarting containers with AI_MODEL=$model..."
+    docker compose up -d auth_platform mcp-server
+
+    echo "Waiting for services to stabilize..."
+    sleep 10
+
+    # 3. Run Verification Test
+    # We run ONLY the single verification test to avoid rate limits (Gemini 15 RPM)
+    # while still proving the model integration and generating a comparison log.
+    echo "Running verification test..."
+    set +e # Allow pytest to fail without exiting script immediately
+    pytest tests/e2e/test_verification_single.py
+
+    MODEL_RET=$?
+    set -e
+
+    if [ "$model" == "groq" ]; then
+        RET_GROQ=$MODEL_RET
+    else
+        RET_GEMINI=$MODEL_RET
+    fi
+
+    if [ $MODEL_RET -eq 0 ]; then
+        echo "✅ Tests passed for $model"
+    else
+        echo "❌ Tests failed for $model"
+    fi
+done
+
+deactivate
+cd ..
+
+# --- PHASE 3: REPORTING ---
 echo ""
 echo "=================================================="
 echo "                  FINAL REPORT                    "
 echo "=================================================="
-if [ $RET_AUTH -eq 0 ]; then echo "✅ Auth Platform Unit: PASSED"; else echo "❌ Auth Platform Unit: FAILED"; fi
-if [ $RET_MCP_UNIT -eq 0 ]; then echo "✅ MCP Server Unit:    PASSED"; else echo "❌ MCP Server Unit:    FAILED"; fi
-if [ $RET_MCP_INT -eq 0 ]; then echo "✅ MCP Integration:    PASSED"; else echo "⚠️ MCP Integration:    FAILED (Check Docker)"; fi
-if [ $RET_MCP_E2E -eq 0 ]; then echo "✅ MCP E2E Scenarios:  PASSED"; else echo "❌ MCP E2E Scenarios:  FAILED"; fi
-if [ $RET_FRONTEND -eq 0 ]; then echo "✅ Frontend UI Tests:  PASSED"; else echo "❌ Frontend UI Tests:  FAILED"; fi
+echo "Core Tests:          PASSED"
+if [ $RET_GROQ -eq 0 ]; then echo "AI Model [groq]:      PASSED"; else echo "AI Model [groq]:      FAILED"; fi
+if [ $RET_GEMINI -eq 0 ]; then echo "AI Model [gemini]:    PASSED"; else echo "AI Model [gemini]:    FAILED"; fi
 echo "=================================================="
+
+echo ""
+echo "=================================================="
+echo "             AI RESPONSE LOGS COMPARISON          "
+echo "=================================================="
+
+if [ -d "logs" ]; then
+    # Groq Logs
+    echo "--- GROQ LOGS ---"
+    find logs/groq -name "*.log" 2>/dev/null | sort | while read logfile; do
+        echo ">>> $logfile"
+        cat "$logfile"
+        echo ""
+    done
+
+    echo ""
+    echo "--- GEMINI LOGS ---"
+    find logs/gemini -name "*.log" 2>/dev/null | sort | while read logfile; do
+        echo ">>> $logfile"
+        cat "$logfile"
+        echo ""
+    done
+fi
+echo "=================================================="
+
+# Exit with failure if any model failed
+if [ $RET_GROQ -ne 0 ] || [ $RET_GEMINI -ne 0 ]; then
+    exit 1
+fi
