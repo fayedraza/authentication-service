@@ -39,7 +39,10 @@
         "text": "{\n  \"username\": \"testuser\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"tier\": \"dev\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -60,7 +63,10 @@
         "text": "{\n  \"username\": \"testuser\",\n  \"password\": \"SecurePass123!\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -75,7 +81,10 @@
         "text": "{\n  \"username\": \"testuser\",\n  \"code\": \"000000\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -90,7 +99,10 @@
         "text": "{\n  \"username\": \"testuser\",\n  \"password\": \"WrongPassword\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -107,7 +119,10 @@
       "method": "GET",
       "url": "{{ _.auth_url }}/2fa/status",
       "headers": [
-        { "name": "Authorization", "value": "Bearer {{ _.jwt_token }}" }
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
       ]
     },
     {
@@ -122,7 +137,10 @@
         "text": "{\n  \"username\": \"testuser\",\n  \"password\": \"SecurePass123!\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -143,7 +161,10 @@
         "text": "{\n  \"email\": \"test@example.com\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -158,7 +179,10 @@
         "text": "{\n  \"token\": \"PASTE_TOKEN_FROM_LOGS\",\n  \"new_password\": \"NewSecurePass123!\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -182,8 +206,7 @@
       "name": "Get Event Logs (Filtered)",
       "method": "GET",
       "url": "{{ _.auth_url }}/dev/event-logs?event_type=login_success&limit=10"
-    }
-,
+    },
     {
       "_id": "fld_mcp_health",
       "_type": "request_group",
@@ -224,7 +247,10 @@
         "text": "{\n  \"user_id\": 123,\n  \"username\": \"john.doe\",\n  \"event_type\": \"login_success\",\n  \"ip_address\": \"192.168.1.100\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"metadata\": {}\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -239,7 +265,10 @@
         "text": "{\n  \"user_id\": 456,\n  \"username\": \"suspicious.user\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.1\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T10:35:00Z\",\n  \"metadata\": {}\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -254,7 +283,10 @@
         "text": "{\n  \"user_id\": 789,\n  \"username\": \"test.user\",\n  \"event_type\": \"2fa_failure\",\n  \"ip_address\": \"192.168.1.50\",\n  \"user_agent\": \"Mozilla/5.0\",\n  \"timestamp\": \"2024-01-15T10:40:00Z\",\n  \"metadata\": {}\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -359,7 +391,10 @@
         "text": "{\n  \"status\": \"reviewed\"\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -380,7 +415,10 @@
         "text": "{\n  \"user_id\": 999,\n  \"username\": \"attack.target\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.1\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T12:00:00Z\",\n  \"metadata\": {}\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -395,7 +433,10 @@
         "text": "{\n  \"user_id\": 999,\n  \"username\": \"attack.target\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.2\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T12:01:00Z\",\n  \"metadata\": {}\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     },
     {
@@ -410,7 +451,102 @@
         "text": "{\n  \"user_id\": 999,\n  \"username\": \"attack.target\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"10.0.0.3\",\n  \"user_agent\": \"curl/7.68.0\",\n  \"timestamp\": \"2024-01-15T12:02:00Z\",\n  \"metadata\": {}\n}"
       },
       "headers": [
-        { "name": "Content-Type", "value": "application/json" }
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "fld_ai_tickets",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "12. AI - Ticket Automation"
+    },
+    {
+      "_id": "req_ticket_critical",
+      "_type": "request",
+      "parentId": "fld_ai_tickets",
+      "name": "Create Critical Security Ticket (Dev Tier)",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/support/ticket",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"CRITICAL: System Breach detected\",\n  \"description\": \"I found a vulnerability in your login flow that allows bypass. Expected behavior: Access denied. Actual: Access granted.\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_ticket_general",
+      "_type": "request",
+      "parentId": "fld_ai_tickets",
+      "name": "Create General Inquiry Ticket",
+      "method": "POST",
+      "url": "{{ _.auth_url }}/support/ticket",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"How to update profile?\",\n  \"description\": \"I cannot find the setting to change my avatar. Please help.\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.jwt_token }}"
+        }
+      ]
+    },
+    {
+      "_id": "fld_ai_fraud",
+      "_type": "request_group",
+      "parentId": "wrk_complete",
+      "name": "13. AI - Fraud Simulation"
+    },
+    {
+      "_id": "req_fraud_sqlmap",
+      "_type": "request",
+      "parentId": "fld_ai_fraud",
+      "name": "Ingest Suspicious Agent (SQLMap)",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 901,\n  \"username\": \"admin' OR 1=1--\",\n  \"event_type\": \"login_failure\",\n  \"ip_address\": \"192.168.1.105\",\n  \"user_agent\": \"sqlmap/1.5.2#stable\",\n  \"timestamp\": \"2024-01-15T12:05:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_fraud_tor",
+      "_type": "request",
+      "parentId": "fld_ai_fraud",
+      "name": "Ingest Tor Exit Node IP",
+      "method": "POST",
+      "url": "{{ _.mcp_url }}/mcp/ingest",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"user_id\": 902,\n  \"username\": \"anonymous_user\",\n  \"event_type\": \"login_success\",\n  \"ip_address\": \"185.220.101.5\",\n  \"user_agent\": \"Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0\",\n  \"timestamp\": \"2024-01-15T12:10:00Z\",\n  \"metadata\": {}\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
       ]
     }
   ]

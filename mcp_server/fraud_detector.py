@@ -238,7 +238,7 @@ class FraudDetector:
             assessment = FraudAssessment(
                 risk_score=baml_result.risk_score,
                 email_notification=baml_result.alert,  # BAML still uses 'alert' field
-                reason=f"[BAML] {baml_result.reason}",
+                reason=f"[BAML:{baml_result.model}] {baml_result.reason}",
                 confidence=baml_result.confidence
             )
 
@@ -344,9 +344,9 @@ class FraudDetector:
 
         # Build reason string
         if reasons:
-            reason = "; ".join(reasons)
+            reason = f"[Rule] {'; '.join(reasons)}"
         else:
-            reason = "Normal authentication pattern detected"
+            reason = "[Rule] Normal authentication pattern detected"
 
         return FraudAssessment(
             risk_score=risk_score,

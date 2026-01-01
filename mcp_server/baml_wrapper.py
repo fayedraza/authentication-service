@@ -78,12 +78,14 @@ class BAMLFraudAssessment:
         risk_score: float,
         alert: bool,
         reason: str,
-        confidence: float
+        confidence: float,
+        model: str = "unknown"
     ):
         self.risk_score = risk_score
         self.alert = alert
         self.reason = reason
         self.confidence = confidence
+        self.model = model
 
 
 class BAMLClient:
@@ -209,7 +211,8 @@ class BAMLClient:
                 risk_score=float(result.risk_score),
                 alert=bool(result.alert),
                 reason=str(result.reason),
-                confidence=float(result.confidence)
+                confidence=float(result.confidence),
+                model=ai_model
             )
 
             # Update log entry

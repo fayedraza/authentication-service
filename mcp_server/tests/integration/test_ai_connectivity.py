@@ -45,8 +45,8 @@ async def test_ensure_ai_is_used_with_real_key(caplog):
         result = await detector.analyze_event(event, mock_db)
 
     # 5. Assert AI Usage
-    # The presence of "[BAML]" in the reason string is our contract for AI-generated results.
-    if "[BAML]" in result.reason:
+    # The presence of "[BAML" in the reason string is our contract for AI-generated results.
+    if "[BAML" in result.reason:
         # Success: AI was used
         assert True
     else:

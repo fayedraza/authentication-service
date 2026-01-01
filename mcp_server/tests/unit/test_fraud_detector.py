@@ -675,7 +675,8 @@ async def test_baml_fallback_when_disabled(db_session, base_event):
     # Should use rule-based detection
     assert assessment.risk_score == 0.3
     assert assessment.confidence == 1.0
-    assert "[BAML]" not in assessment.reason
+    assert "[BAML" not in assessment.reason
+    assert "[Rule]" in assessment.reason
 
 
 @patch('mcp_server.fraud_detector.get_baml_client')
@@ -715,7 +716,8 @@ async def test_baml_fallback_when_unavailable(mock_get_baml_client, db_session, 
     # Should fall back to rule-based detection
     assert assessment.risk_score == 0.3
     assert assessment.confidence == 1.0
-    assert "[BAML]" not in assessment.reason
+    assert "[BAML" not in assessment.reason
+    assert "[Rule]" in assessment.reason
 
 
 @patch('mcp_server.fraud_detector.get_baml_client')
@@ -733,7 +735,8 @@ async def test_baml_analysis_success(mock_get_baml_client, db_session, base_even
         risk_score=0.85,
         alert=True,
         reason="AI detected suspicious pattern",
-        confidence=0.95
+        confidence=0.95,
+        model="test-model"
     )
     mock_client.analyze_fraud = AsyncMock(return_value=baml_result)
     mock_get_baml_client.return_value = mock_client
@@ -748,7 +751,7 @@ async def test_baml_analysis_success(mock_get_baml_client, db_session, base_even
     assert assessment.risk_score == 0.85
     assert assessment.email_notification is True
     assert assessment.confidence == 0.95
-    assert "[BAML]" in assessment.reason
+    assert "[BAML:test-model]" in assessment.reason
     assert "AI detected suspicious pattern" in assessment.reason
 
 
@@ -790,7 +793,8 @@ async def test_baml_fallback_on_error(mock_get_baml_client, db_session, base_eve
     # Should fall back to rule-based detection
     assert assessment.risk_score == 0.3
     assert assessment.confidence == 1.0
-    assert "[BAML]" not in assessment.reason
+    assert "[BAML" not in assessment.reason
+    assert "[Rule]" in assessment.reason
 
 
 
