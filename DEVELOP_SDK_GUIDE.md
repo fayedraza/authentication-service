@@ -13,6 +13,7 @@ All requests should be made to the Auth Platform service.
 Create a new user account.
 
 
+
 - **Endpoint**: `POST /auth/register`
 - **Content-Type**: `application/json`
 - **Payload**:
