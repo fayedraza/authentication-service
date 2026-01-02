@@ -58,3 +58,6 @@ dev-portal-ui/dev-portal-ui/node_modules/
 
 # Ignore IDE session/history
 .bash_sessions/
+
+# Ignore fraud simulation reports for Dagger Workflow
+fraud_simulation_reports/

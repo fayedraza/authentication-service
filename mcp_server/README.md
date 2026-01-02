@@ -422,19 +422,6 @@ Readiness check with dependency status.
 
 The MCP Server uses a two-tier fraud detection system:
 
-### Rule-Based Detection (Default)
-
-The rule-based engine analyzes authentication events using predefined patterns:
-
-| Rule | Risk Score Increase | Description |
-|------|---------------------|-------------|
-| Multiple failed logins | +0.3 to +0.7 | 3-5 attempts: +0.3, 6-10: +0.5, 11+: +0.7 |
-| Multiple failed 2FA | +0.4 to +0.8 | 3-5 attempts: +0.4, 6-10: +0.6, 11+: +0.8 |
-| IP address change | +0.2 | Different IP from previous login |
-| User agent change | +0.1 | Different user agent from previous login |
-| Geographic anomaly | +0.3 | Login from new geographic location |
-| Password reset + login | +0.2 | Password reset followed by immediate login |
-
 **Risk Score Thresholds**:
 - **High Risk** (> 0.7): Alert generated automatically
 - **Medium Risk** (0.4 - 0.7): Logged for review

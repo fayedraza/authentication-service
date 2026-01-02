@@ -1,0 +1,31 @@
+# .github/workflows/dagger-ci.yml
+name: Run Dagger Fraud Simulation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Full CI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  dagger-run:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dagger CLI
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | sh
+          sudo mv bin/dagger /usr/local/bin/
+
+      - name: Run Fraud Detection Pipeline
+        run: dagger run python3 fraud_simulation/fraud_agent_pipeline.py
