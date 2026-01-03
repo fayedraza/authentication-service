@@ -47,7 +47,7 @@ class FraudSimulation:
 
     @function
     async def analyze_results(self, summary: dagger.File) -> str:
-        return (
+        return await (
             dag.llm()
             .with_env(
                 dag.env()
