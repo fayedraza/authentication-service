@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   run-fraud-simulation:
@@ -35,10 +36,12 @@ jobs:
           echo "Generating fraud summary insights via AI Agent"
           dagger call analyze-results --summary dashboard/summary.json > dashboard/insights.txt
 
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add dashboard/
-          git commit -m "Update fraud dashboard with AI insights"
-          git push
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "Update fraud dashboard with AI insights"
+          title: "Update Fraud Dashboard"
+          body: "Automated update of fraud simulation results and AI insights."
+          branch: "fraud-dashboard-update"
+          base: "main"
+          delete-branch: true
