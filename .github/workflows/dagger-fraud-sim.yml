@@ -13,8 +13,7 @@ jobs:
       - name: Install Dagger CLI
         uses: dagger/dagger-for-github@v7
         with:
-          version: "0.19.8"
-          install-only: true
+          version: "latest"
       - name: Run Dagger Pipeline (Cloud)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
