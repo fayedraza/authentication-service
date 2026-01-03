@@ -5,26 +5,40 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  run-fraud-agent:
+  run-fraud-simulation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Install Dagger CLI
         uses: dagger/dagger-for-github@v7
         with:
           version: "latest"
-      - name: Run Dagger Pipeline (Cloud)
+
+      - name: Run Fraud Simulation
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         run: |
-          mkdir -p fraud_simulation_reports
-          dagger call run-fraud-sim --source . --gemini-api-key env:GEMINI_API_KEY --groq-api-key env:GROQ_API_KEY export --path fraud_simulation_reports/summary.json
+          mkdir -p dashboard
+          dagger call run-fraud-sim --source . --gemini-api-key env:GEMINI_API_KEY --groq-api-key env:GROQ_API_KEY export --path dashboard/summary.json
 
-      - name: Upload Simulation Summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: fraud-summary
-          path: fraud_simulation_reports/summary.json
+      - name: Run AI Agent Analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "Generating fraud summary insights via AI Agent"
+          dagger call analyze-results --summary dashboard/summary.json > dashboard/insights.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add dashboard/
+          git commit -m "Update fraud dashboard with AI insights"
+          git push
