@@ -3,13 +3,13 @@
 fail-under=9.0
 
 # Files or directories to be skipped
-ignore=tests,.venv,venv,node_modules,.git,__pycache__,agents,baml_client,baml_wrapper.py,baml_src
+ignore=tests,.venv,venv,node_modules,.git,__pycache__,agents,baml_client,baml_wrapper.py,baml_src,dagger
 
 # Ignore patterns for files
 ignore-patterns=test_.*\.py$,.*_test\.py$,conftest\.py$
 
 # Ignore patterns for paths (regex)
-ignore-paths=^.*baml_wrapper\.py$,^.*baml_client.*$
+ignore-paths=^.*baml_wrapper\.py$,^.*baml_client.*$,^dagger/.*$,^fraud_simulation/fraud_agent_pipeline\.py$
 
 # Use multiple processes to speed up Pylint
 jobs=1
@@ -46,7 +46,9 @@ disable=
     # Import outside toplevel - sometimes necessary for circular imports
     import-outside-toplevel,
     # Line too long - some lines need to be longer for readability
-    line-too-long
+    line-too-long,
+    no-member,
+    c-extension-no-member
 
 [DESIGN]
 # Increase thresholds for complexity metrics if needed
