@@ -11,8 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Dagger CLI
-        uses: dagger/dagger-for-github@v6
+        uses: dagger/dagger-for-github@v7
         with:
+          version: "0.19.8"
           install-only: true
       - name: Run Dagger Pipeline (Cloud)
         run: |
