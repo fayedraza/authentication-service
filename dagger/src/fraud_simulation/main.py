@@ -1,41 +1,46 @@
-# dagger/module.py
 import dagger
-from dagger import function
+from dagger import dag, function, object_type
 
-@function
-async def run_fraud_sim(
-    gemini_api_key: dagger.Secret,
-    groq_api_key: dagger.Secret,
-) -> str:
-    """
-    Runs the fraud simulation using the global Dagger context.
-    """
+@object_type
+class FraudSimulation:
+    @function
+    async def run_fraud_sim(
+        self,
+        gemini_api_key: dagger.Secret,
+        groq_api_key: dagger.Secret,
+    ) -> str:
+        """
+        Runs the fraud simulation using the global Dagger context.
+        """
 
-    # Use global `dagger` / `dag`, not self
-    host_dir = dagger.host().directory(".")
+        # Use global `dag` for host and container access
+        host_dir = dag.host().directory(".")
 
-    base = (
-        dagger.container()
-        .from_("python:3.11-slim")
-        .with_directory("/app", host_dir)
-        .with_workdir("/app")
-        .with_exec(["pip", "install", "pydantic"])
-    )
+        base = (
+            dag.container()
+            .from_("python:3.11-slim")
+            .with_directory("/app", host_dir)
+            .with_workdir("/app")
+            .with_exec(["pip", "install", "pydantic"])
+        )
 
-    print("\n" + "=" * 50)
-    print("🚀 STARTING DAGGER FRAUD SIMULATION")
-    print("=" * 50 + "\n")
+        print("\n" + "=" * 50)
+        print("🚀 STARTING DAGGER FRAUD SIMULATION")
+        print("=" * 50 + "\n")
 
-    step1 = base.with_exec(["python3", "fraud_simulation/generate_accounts.py"])
-    step2 = step1.with_exec(["python3", "fraud_simulation/generate_logs.py"])
-    step3 = (
-        step2
-        .with_secret_variable("GEMINI_API_KEY", gemini_api_key)
-        .with_secret_variable("GROQ_API_KEY", groq_api_key)
-        .with_exec(["python3", "fraud_simulation/process_logs.py"])
-    )
+        # Paths are now relative to the root in dagger/src/fraud_simulation/
+        sim_path = "dagger/src/fraud_simulation"
 
-    # Force streaming stdout to trigger execution
-    await step3.stdout()
+        step1 = base.with_exec(["python3", f"{sim_path}/generate_accounts.py"])
+        step2 = step1.with_exec(["python3", f"{sim_path}/generate_logs.py"])
+        step3 = (
+            step2
+            .with_secret_variable("GEMINI_API_KEY", gemini_api_key)
+            .with_secret_variable("GROQ_API_KEY", groq_api_key)
+            .with_exec(["python3", f"{sim_path}/process_logs.py"])
+        )
 
-    return "✅ Simulation complete! Results available in fraud_simulation_reports/summary.json"
+        # Force streaming stdout to trigger execution
+        await step3.stdout()
+
+        return "✅ Simulation complete! Results available in fraud_simulation_reports/summary.json"
