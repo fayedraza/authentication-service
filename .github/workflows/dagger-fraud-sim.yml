@@ -16,9 +16,9 @@ jobs:
           version: "0.19.8"
           install-only: true
       - name: Run Dagger Pipeline (Cloud)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         run: |
-          echo "Exporting secrets..."
-          export DAGGER_CLOUD_TOKEN="${{ secrets.DAGGER_CLOUD_TOKEN }}"
-          export GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
-          export GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}"
           dagger call run-fraud-sim   --gemini-api-key env:GEMINI_API_KEY   --groq-api-key env:GROQ_API_KEY
