@@ -1,50 +1,58 @@
 {
   "report_type": "Fraud Simulation Summary (Per Iteration)",
-  "timestamp": "2026-01-03T19:15:38.041846",
+  "timestamp": "2026-01-03T19:18:36.199217",
   "accounts_created": 5,
   "total_logins": 20,
-  "normal_logins": 20,
-  "suspicious_logins": 0,
-  "average_score": 0.14,
+  "normal_logins": 19,
+  "suspicious_logins": 1,
+  "average_score": 0.21,
   "average_fraud_score_per_account": [
     {
-      "user_id": "dev_003",
+      "user_id": "pro_002",
+      "score": 0.8
+    },
+    {
+      "user_id": "dev_009",
       "score": 0.5
     },
     {
-      "user_id": "pro_003",
-      "score": 0.34
+      "user_id": "dev_002",
+      "score": 0.5
     },
     {
       "user_id": "dev_001",
       "score": 0.25
     },
     {
-      "user_id": "pro_004",
+      "user_id": "dev_003",
       "score": 0.25
     },
     {
-      "user_id": "pro_005",
-      "score": 0.22
-    },
-    {
-      "user_id": "pro_008",
-      "score": 0.12
-    },
-    {
-      "user_id": "pro_001",
-      "score": 0.07
+      "user_id": "pro_000",
+      "score": 0.2
     },
     {
       "user_id": "pro_009",
-      "score": 0.04
+      "score": 0.18
     },
     {
-      "user_id": "dev_009",
+      "user_id": "dev_008",
+      "score": 0.17
+    },
+    {
+      "user_id": "pro_008",
+      "score": 0.06
+    },
+    {
+      "user_id": "pro_007",
+      "score": 0.02
+    },
+    {
+      "user_id": "dev_004",
       "score": 0.0
     },
     {
-      "user_id": "dev_000",
+      "user_id": "dev_007",
       "score": 0.0
     },
     {
@@ -52,21 +60,21 @@
       "score": 0.0
     },
     {
-      "user_id": "dev_008",
-      "score": 0.0
-    },
-    {
-      "user_id": "dev_006",
+      "user_id": "dev_000",
       "score": 0.0
     }
   ],
   "total_alerts_per_account": [
     {
-      "user_id": "dev_003",
+      "user_id": "pro_002",
+      "alerts": 1
+    },
+    {
+      "user_id": "dev_009",
       "alerts": 0
     },
     {
-      "user_id": "pro_003",
+      "user_id": "dev_002",
       "alerts": 0
     },
     {
@@ -74,19 +82,11 @@
       "alerts": 0
     },
     {
-      "user_id": "pro_004",
+      "user_id": "dev_003",
       "alerts": 0
     },
     {
-      "user_id": "pro_005",
-      "alerts": 0
-    },
-    {
-      "user_id": "pro_008",
-      "alerts": 0
-    },
-    {
-      "user_id": "pro_001",
+      "user_id": "pro_000",
       "alerts": 0
     },
     {
@@ -94,11 +94,23 @@
       "alerts": 0
     },
     {
-      "user_id": "dev_009",
+      "user_id": "dev_008",
       "alerts": 0
     },
     {
-      "user_id": "dev_000",
+      "user_id": "pro_008",
+      "alerts": 0
+    },
+    {
+      "user_id": "pro_007",
+      "alerts": 0
+    },
+    {
+      "user_id": "dev_004",
+      "alerts": 0
+    },
+    {
+      "user_id": "dev_007",
       "alerts": 0
     },
     {
@@ -106,25 +118,21 @@
       "alerts": 0
     },
     {
-      "user_id": "dev_008",
-      "alerts": 0
-    },
-    {
-      "user_id": "dev_006",
+      "user_id": "dev_000",
       "alerts": 0
     }
   ],
   "details": [
     {
-      "user_id": "pro_001",
+      "user_id": "pro_000",
       "tier": "pro",
-      "fraud_score_ai": 0.07,
+      "fraud_score_ai": 0.16,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
-          "score": 0.07,
+          "score": 0.16,
           "reasons": [],
           "model": "Gemini-1.5-Pro"
         },
@@ -137,75 +145,35 @@
       "reasons": []
     },
     {
+      "user_id": "dev_001",
+      "tier": "dev",
+      "fraud_score_ai": 0.0,
+      "fraud_score_rule": 0.5,
+      "is_anomaly": false,
+      "login_time": "00:56",
+      "comparison": {
+        "gemini": {
+          "score": 0.0,
+          "reasons": [],
+          "model": "Gemini-1.5-Pro"
+        },
+        "groq": {
+          "score": 0.0,
+          "reasons": [],
+          "model": "Groq-Llama-3"
+        }
+      },
+      "reasons": [
+        "[Rule] Suspicious login time: 00:56"
+      ]
+    },
+    {
       "user_id": "dev_009",
       "tier": "dev",
       "fraud_score_ai": 0.0,
-      "fraud_score_rule": 0.0,
-      "is_anomaly": false,
-      "login_time": "19:15",
-      "comparison": {
-        "gemini": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Gemini-1.5-Pro"
-        },
-        "groq": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Groq-Llama-3"
-        }
-      },
-      "reasons": []
-    },
-    {
-      "user_id": "dev_000",
-      "tier": "dev",
-      "fraud_score_ai": 0.0,
-      "fraud_score_rule": 0.0,
-      "is_anomaly": false,
-      "login_time": "19:15",
-      "comparison": {
-        "gemini": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Gemini-1.5-Pro"
-        },
-        "groq": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Groq-Llama-3"
-        }
-      },
-      "reasons": []
-    },
-    {
-      "user_id": "dev_001",
-      "tier": "dev",
-      "fraud_score_ai": 0.0,
-      "fraud_score_rule": 0.0,
-      "is_anomaly": false,
-      "login_time": "19:15",
-      "comparison": {
-        "gemini": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Gemini-1.5-Pro"
-        },
-        "groq": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Groq-Llama-3"
-        }
-      },
-      "reasons": []
-    },
-    {
-      "user_id": "dev_003",
-      "tier": "dev",
-      "fraud_score_ai": 0.0,
       "fraud_score_rule": 0.5,
       "is_anomaly": false,
-      "login_time": "00:03",
+      "login_time": "02:52",
       "comparison": {
         "gemini": {
           "score": 0.0,
@@ -219,16 +187,37 @@
         }
       },
       "reasons": [
-        "[Rule] Suspicious login time: 00:03"
+        "[Rule] Suspicious login time: 02:52"
       ]
+    },
+    {
+      "user_id": "pro_008",
+      "tier": "pro",
+      "fraud_score_ai": 0.06,
+      "fraud_score_rule": 0.0,
+      "is_anomaly": false,
+      "login_time": "19:18",
+      "comparison": {
+        "gemini": {
+          "score": 0.06,
+          "reasons": [],
+          "model": "Gemini-1.5-Pro"
+        },
+        "groq": {
+          "score": 0.07,
+          "reasons": [],
+          "model": "Groq-Llama-3"
+        }
+      },
+      "reasons": []
     },
     {
       "user_id": "dev_001",
       "tier": "dev",
       "fraud_score_ai": 0.0,
-      "fraud_score_rule": 0.5,
+      "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "00:05",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
           "score": 0.0,
@@ -241,17 +230,36 @@
           "model": "Groq-Llama-3"
         }
       },
-      "reasons": [
-        "[Rule] Suspicious login time: 00:05"
-      ]
+      "reasons": []
     },
     {
-      "user_id": "dev_005",
+      "user_id": "pro_009",
+      "tier": "pro",
+      "fraud_score_ai": 0.25,
+      "fraud_score_rule": 0.0,
+      "is_anomaly": false,
+      "login_time": "19:18",
+      "comparison": {
+        "gemini": {
+          "score": 0.25,
+          "reasons": [],
+          "model": "Gemini-1.5-Pro"
+        },
+        "groq": {
+          "score": 0.28,
+          "reasons": [],
+          "model": "Groq-Llama-3"
+        }
+      },
+      "reasons": []
+    },
+    {
+      "user_id": "dev_004",
       "tier": "dev",
       "fraud_score_ai": 0.0,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
           "score": 0.0,
@@ -272,7 +280,7 @@
       "fraud_score_ai": 0.0,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
           "score": 0.0,
@@ -288,12 +296,12 @@
       "reasons": []
     },
     {
-      "user_id": "pro_003",
-      "tier": "pro",
+      "user_id": "dev_003",
+      "tier": "dev",
       "fraud_score_ai": 0.0,
-      "fraud_score_rule": 0.0,
+      "fraud_score_rule": 0.5,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "01:30",
       "comparison": {
         "gemini": {
           "score": 0.0,
@@ -301,20 +309,22 @@
           "model": "Gemini-1.5-Pro"
         },
         "groq": {
-          "score": 0.25,
+          "score": 0.0,
           "reasons": [],
           "model": "Groq-Llama-3"
         }
       },
-      "reasons": []
+      "reasons": [
+        "[Rule] Suspicious login time: 01:30"
+      ]
     },
     {
-      "user_id": "dev_000",
+      "user_id": "dev_007",
       "tier": "dev",
       "fraud_score_ai": 0.0,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
           "score": 0.0,
@@ -330,20 +340,20 @@
       "reasons": []
     },
     {
-      "user_id": "pro_008",
+      "user_id": "pro_000",
       "tier": "pro",
-      "fraud_score_ai": 0.27,
+      "fraud_score_ai": 0.23,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
-          "score": 0.27,
+          "score": 0.23,
           "reasons": [],
           "model": "Gemini-1.5-Pro"
         },
         "groq": {
-          "score": 0.14,
+          "score": 0.05,
           "reasons": [],
           "model": "Groq-Llama-3"
         }
@@ -351,104 +361,43 @@
       "reasons": []
     },
     {
-      "user_id": "pro_008",
-      "tier": "pro",
-      "fraud_score_ai": 0.03,
-      "fraud_score_rule": 0.0,
+      "user_id": "dev_002",
+      "tier": "dev",
+      "fraud_score_ai": 0.0,
+      "fraud_score_rule": 0.5,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "04:09",
       "comparison": {
         "gemini": {
-          "score": 0.03,
+          "score": 0.0,
           "reasons": [],
           "model": "Gemini-1.5-Pro"
         },
         "groq": {
-          "score": 0.25,
+          "score": 0.0,
           "reasons": [],
           "model": "Groq-Llama-3"
         }
       },
-      "reasons": []
+      "reasons": [
+        "[Rule] Suspicious login time: 04:09"
+      ]
     },
     {
-      "user_id": "pro_008",
+      "user_id": "pro_007",
       "tier": "pro",
-      "fraud_score_ai": 0.07,
+      "fraud_score_ai": 0.02,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
-          "score": 0.07,
-          "reasons": [],
-          "model": "Gemini-1.5-Pro"
-        },
-        "groq": {
           "score": 0.02,
           "reasons": [],
-          "model": "Groq-Llama-3"
-        }
-      },
-      "reasons": []
-    },
-    {
-      "user_id": "pro_005",
-      "tier": "pro",
-      "fraud_score_ai": 0.26,
-      "fraud_score_rule": 0.0,
-      "is_anomaly": false,
-      "login_time": "19:15",
-      "comparison": {
-        "gemini": {
-          "score": 0.26,
-          "reasons": [],
           "model": "Gemini-1.5-Pro"
         },
         "groq": {
-          "score": 0.29,
-          "reasons": [],
-          "model": "Groq-Llama-3"
-        }
-      },
-      "reasons": []
-    },
-    {
-      "user_id": "dev_000",
-      "tier": "dev",
-      "fraud_score_ai": 0.0,
-      "fraud_score_rule": 0.0,
-      "is_anomaly": false,
-      "login_time": "19:15",
-      "comparison": {
-        "gemini": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Gemini-1.5-Pro"
-        },
-        "groq": {
-          "score": 0.0,
-          "reasons": [],
-          "model": "Groq-Llama-3"
-        }
-      },
-      "reasons": []
-    },
-    {
-      "user_id": "pro_004",
-      "tier": "pro",
-      "fraud_score_ai": 0.25,
-      "fraud_score_rule": 0.0,
-      "is_anomaly": false,
-      "login_time": "19:15",
-      "comparison": {
-        "gemini": {
-          "score": 0.25,
-          "reasons": [],
-          "model": "Gemini-1.5-Pro"
-        },
-        "groq": {
-          "score": 0.07,
+          "score": 0.3,
           "reasons": [],
           "model": "Groq-Llama-3"
         }
@@ -458,18 +407,18 @@
     {
       "user_id": "pro_009",
       "tier": "pro",
-      "fraud_score_ai": 0.04,
+      "fraud_score_ai": 0.11,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
-          "score": 0.04,
+          "score": 0.11,
           "reasons": [],
           "model": "Gemini-1.5-Pro"
         },
         "groq": {
-          "score": 0.21,
+          "score": 0.28,
           "reasons": [],
           "model": "Groq-Llama-3"
         }
@@ -477,56 +426,98 @@
       "reasons": []
     },
     {
-      "user_id": "pro_003",
-      "tier": "pro",
-      "fraud_score_ai": 0.68,
-      "fraud_score_rule": 0.5,
+      "user_id": "dev_005",
+      "tier": "dev",
+      "fraud_score_ai": 0.0,
+      "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "03:00",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
-          "score": 0.68,
+          "score": 0.0,
           "reasons": [],
           "model": "Gemini-1.5-Pro"
         },
         "groq": {
-          "score": 0.6,
+          "score": 0.0,
+          "reasons": [],
+          "model": "Groq-Llama-3"
+        }
+      },
+      "reasons": []
+    },
+    {
+      "user_id": "dev_008",
+      "tier": "dev",
+      "fraud_score_ai": 0.0,
+      "fraud_score_rule": 0.0,
+      "is_anomaly": false,
+      "login_time": "19:18",
+      "comparison": {
+        "gemini": {
+          "score": 0.0,
+          "reasons": [],
+          "model": "Gemini-1.5-Pro"
+        },
+        "groq": {
+          "score": 0.0,
+          "reasons": [],
+          "model": "Groq-Llama-3"
+        }
+      },
+      "reasons": []
+    },
+    {
+      "user_id": "dev_003",
+      "tier": "dev",
+      "fraud_score_ai": 0.0,
+      "fraud_score_rule": 0.0,
+      "is_anomaly": false,
+      "login_time": "19:18",
+      "comparison": {
+        "gemini": {
+          "score": 0.0,
+          "reasons": [],
+          "model": "Gemini-1.5-Pro"
+        },
+        "groq": {
+          "score": 0.0,
+          "reasons": [],
+          "model": "Groq-Llama-3"
+        }
+      },
+      "reasons": []
+    },
+    {
+      "user_id": "dev_008",
+      "tier": "dev",
+      "fraud_score_ai": 0.0,
+      "fraud_score_rule": 0.5,
+      "is_anomaly": false,
+      "login_time": "03:11",
+      "comparison": {
+        "gemini": {
+          "score": 0.0,
+          "reasons": [],
+          "model": "Gemini-1.5-Pro"
+        },
+        "groq": {
+          "score": 0.0,
           "reasons": [],
           "model": "Groq-Llama-3"
         }
       },
       "reasons": [
-        "[Rule] Suspicious login time: 03:00"
+        "[Rule] Suspicious login time: 03:11"
       ]
     },
     {
-      "user_id": "pro_005",
-      "tier": "pro",
-      "fraud_score_ai": 0.17,
-      "fraud_score_rule": 0.0,
-      "is_anomaly": false,
-      "login_time": "19:15",
-      "comparison": {
-        "gemini": {
-          "score": 0.17,
-          "reasons": [],
-          "model": "Gemini-1.5-Pro"
-        },
-        "groq": {
-          "score": 0.14,
-          "reasons": [],
-          "model": "Groq-Llama-3"
-        }
-      },
-      "reasons": []
-    },
-    {
-      "user_id": "dev_006",
+      "user_id": "dev_000",
       "tier": "dev",
       "fraud_score_ai": 0.0,
       "fraud_score_rule": 0.0,
       "is_anomaly": false,
-      "login_time": "19:15",
+      "login_time": "19:18",
       "comparison": {
         "gemini": {
           "score": 0.0,
@@ -540,6 +531,32 @@
         }
       },
       "reasons": []
+    },
+    {
+      "user_id": "pro_002",
+      "tier": "pro",
+      "fraud_score_ai": 0.8,
+      "fraud_score_rule": 0.5,
+      "is_anomaly": true,
+      "login_time": "02:49",
+      "comparison": {
+        "gemini": {
+          "score": 0.8,
+          "reasons": [
+            "[Gemini-1.5-Pro] detected anomalous login pattern"
+          ],
+          "model": "Gemini-1.5-Pro"
+        },
+        "groq": {
+          "score": 0.61,
+          "reasons": [],
+          "model": "Groq-Llama-3"
+        }
+      },
+      "reasons": [
+        "[Gemini-1.5-Pro] detected anomalous login pattern",
+        "[Rule] Suspicious login time: 02:49"
+      ]
     }
   ]
 }
