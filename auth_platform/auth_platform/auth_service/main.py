@@ -92,7 +92,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_user)
 
-        # Log enrollment event
+        # Log enrollment events
         print(f"[2FA] Auto-enrollment during registration: user_id={new_user.id}, username={new_user.username}, timestamp={datetime.utcnow().isoformat()}")
 
         # Generate otpauth URI for QR code
