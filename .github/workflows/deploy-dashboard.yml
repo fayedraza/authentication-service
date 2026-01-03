@@ -1,0 +1,53 @@
+name: Deploy Fraud Dashboard
+
+on:
+  workflow_run:
+    workflows: ["Dagger Fraud Simulation"]
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Simulation Summary
+        uses: actions/download-artifact@v4
+        with:
+          name: fraud-summary
+          path: fraud_simulation_reports
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.AUTHENTICATION_SERVICE_GITHUB_TOKEN }}
+
+      - name: Install Dagger CLI
+        uses: dagger/dagger-for-github@v7
+        with:
+          version: "0.19.8"
+          install-only: true
+
+      - name: Copy Dagger results to dashboard
+        run: |
+          mkdir -p dashboard
+          mv fraud_simulation_reports/summary.json dashboard/summary.json
+
+      - name: Run AI Agent Summary
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "Generating fraud summary insights via AI Agent"
+          dagger call analyze-results --summary dashboard/summary.json > dashboard/insights.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add dashboard/
+          git commit -m "Update fraud dashboard with AI insights"
+          git push

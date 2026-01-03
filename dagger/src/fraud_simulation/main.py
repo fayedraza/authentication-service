@@ -9,7 +9,7 @@ class FraudSimulation:
         source: dagger.Directory,
         gemini_api_key: dagger.Secret,
         groq_api_key: dagger.Secret,
-    ) -> str:
+    ) -> dagger.File:
         """
         Runs the fraud simulation using the global Dagger context.
         """
@@ -43,4 +43,23 @@ class FraudSimulation:
         # Force streaming stdout to trigger execution
         await step3.stdout()
 
-        return "✅ Simulation complete! Results available in fraud_simulation_reports/summary.json"
+        return step3.file("fraud_simulation_reports/iteration_latest.json")
+
+    @function
+    async def analyze_results(self, summary: dagger.File) -> str:
+        return (
+            dag.llm()
+            .with_env(
+                dag.env()
+                .with_file_input("summary", summary)
+                .with_string_output("insights")
+            )
+            .with_prompt("""
+            Review this fraud summary:
+            $summary
+
+            Identify top suspicious accounts and patterns. Suggest any actions or remediations.
+            Highlight any unusual spikes or risk factors.
+            """)
+            .env().output("insights").as_string()
+        )
