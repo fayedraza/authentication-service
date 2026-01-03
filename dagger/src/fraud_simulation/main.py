@@ -1,6 +1,7 @@
 """Dagger module for fraud simulation."""
 import dagger
-from dagger import dag, function, object_type
+from dagger import dag, function, object_type, Doc
+from typing import Annotated
 
 @object_type
 class FraudSimulation:
@@ -8,8 +9,8 @@ class FraudSimulation:
     @function
     async def run_fraud_sim(
         self,
-        gemini_api_key: dagger.Secret,
-        groq_api_key: dagger.Secret,
+        gemini_api_key: Annotated[dagger.Secret, Doc("Gemini API token")],
+        groq_api_key: Annotated[dagger.Secret, Doc("Groq API token")],
     ) -> str:
         """
         Runs the fraud simulation pipeline with the provided AI API keys.
