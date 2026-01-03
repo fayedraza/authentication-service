@@ -51,8 +51,8 @@ class FraudSimulation:
             dag.llm()
             .with_env(
                 dag.env()
-                .with_file_input("summary", summary, description="Fraud summary file")
-                .with_string_output("insights", description="AI generated insights")
+                .with_file_input("summary", summary, "Fraud summary file")
+                .with_string_output("insights", "AI generated insights")
             )
             .with_prompt("""
             Review this fraud summary:
