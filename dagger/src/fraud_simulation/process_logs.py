@@ -38,6 +38,8 @@ async def process_logs():
         "Groq": os.environ.get("AI_MODEL_GROQ", "Groq-Llama-3")
     }
 
+    account_stats = {} # user_id -> {total_score, count, alerts}
+
     for log in logs:
         if log.get("event_type") == "signup":
             accounts_created += 1
@@ -95,17 +97,44 @@ async def process_logs():
             "reasons": final_reasons
         }
         results.append(result)
-        total_score += max(primary_ai_score, rule_score)
 
-    avg_score = total_score / len(results) if results else 0
+        # Track per account stats
+        user_id = log["user_id"]
+        score = max(primary_ai_score, rule_score)
+        if user_id not in account_stats:
+            account_stats[user_id] = {"total_score": 0.0, "count": 0, "alerts": 0}
+        account_stats[user_id]["total_score"] += score
+        account_stats[user_id]["count"] += 1
+        if is_anomaly:
+            account_stats[user_id]["alerts"] += 1
+
+        total_score += score
+
+    # Calculate per account metrics
+    account_metrics = []
+    for user_id, stats in account_stats.items():
+        account_metrics.append({
+            "user_id": user_id,
+            "average_score": round(stats["total_score"] / stats["count"], 2) if stats["count"] > 0 else 0,
+            "total_alerts": stats["alerts"]
+        })
+    # Sort by score descending to highlight suspicious accounts
+    account_metrics.sort(key=lambda x: x["average_score"], reverse=True)
 
     output = {
+        "report_type": "Fraud Simulation Summary (Per Iteration)",
         "timestamp": datetime.now().isoformat(),
         "accounts_created": accounts_created,
         "total_logins": len(results),
         "normal_logins": len(results) - suspicious_count,
         "suspicious_logins": suspicious_count,
-        "average_score": round(avg_score, 2),
+        "average_score": round(total_score / len(results) if results else 0, 2),
+        "average_fraud_score_per_account": [
+            {"user_id": m["user_id"], "score": m["average_score"]} for m in account_metrics
+        ],
+        "total_alerts_per_account": [
+            {"user_id": m["user_id"], "alerts": m["total_alerts"]} for m in account_metrics
+        ],
         "details": results
     }
 

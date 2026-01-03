@@ -26,22 +26,22 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
         run: |
-          mkdir -p dashboard
-          dagger call run-fraud-sim --source . --gemini-api-key env:GEMINI_API_KEY --groq-api-key env:GROQ_API_KEY export --path dashboard/summary.json
+          mkdir -p results
+          dagger call run-fraud-sim --source . --gemini-api-key env:GEMINI_API_KEY --groq-api-key env:GROQ_API_KEY export --path results/summary.json
 
       - name: Run AI Agent Analysis
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           echo "Generating fraud summary insights via AI Agent"
-          dagger call analyze-results --summary dashboard/summary.json > dashboard/insights.txt
+          dagger call analyze-results --summary results/summary.json > results/insights.txt
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: "Update fraud dashboard with AI insights"
-          title: "Update Fraud Dashboard"
+          commit-message: "Update fraud results with AI insights"
+          title: "Update Fraud Results"
           body: "Automated update of fraud simulation results and AI insights."
-          branch: "fraud-dashboard-update"
+          branch: "fraud-results-update"
           base: "main"
           delete-branch: true
