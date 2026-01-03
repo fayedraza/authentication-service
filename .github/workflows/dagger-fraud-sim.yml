@@ -12,8 +12,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run Dagger Pipeline (Cloud)
         run: |
-          # Note: Replace 'yourorg/auth-service' with your actual Dagger Cloud org/project
-          dagger run --cloud yourorg/auth-service:fraud-v1 \
+          dagger run --cloud authentication-service/auth-service:fraud-v1 \
             call run-fraud-sim \
             --gemini-api-key env:GEMINI_API_KEY \
             --groq-api-key env:GROQ_API_KEY
