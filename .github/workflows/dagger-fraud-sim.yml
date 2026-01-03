@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install Dagger CLI
+        uses: dagger/dagger-for-github@v6
+        with:
+          install-only: true
       - name: Run Dagger Pipeline (Cloud)
         run: |
           dagger run --cloud authentication-service/auth-service:fraud-v1 \
