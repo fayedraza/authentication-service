@@ -22,4 +22,4 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           dagger run --cloud authentication-service/auth-service:fraud-v1 \
-            call run-fraud-sim
+            call run-fraud-sim --token=env://DAGGER_CLOUD_TOKEN
