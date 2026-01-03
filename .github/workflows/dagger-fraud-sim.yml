@@ -22,4 +22,6 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           dagger run --cloud authentication-service/auth-service:fraud-v1 \
-            call run-fraud-sim
+            call run-fraud-sim \
+            --gemini-api-key env:GEMINI_API_KEY \
+            --groq-api-key env:GROQ_API_KEY
