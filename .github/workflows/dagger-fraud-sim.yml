@@ -3,6 +3,9 @@ name: Dagger Fraud Simulation
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'auth_platform/**'
+      - 'mcp_server/**'
   workflow_dispatch:
 
 permissions:
