@@ -6,6 +6,7 @@ class FraudSimulation:
     @function
     async def run_fraud_sim(
         self,
+        source: dagger.Directory,
         gemini_api_key: dagger.Secret,
         groq_api_key: dagger.Secret,
     ) -> str:
@@ -13,15 +14,14 @@ class FraudSimulation:
         Runs the fraud simulation using the global Dagger context.
         """
 
-        # Use global `dag` for host and container access
-        host_dir = dag.host().directory(".")
-
+        # Use the passed source directory instead of dag.host()
         base = (
             dag.container()
             .from_("python:3.11-slim")
-            .with_directory("/app", host_dir)
+            .with_directory("/app", source)
             .with_workdir("/app")
             .with_exec(["pip", "install", "pydantic"])
+            .with_exec(["mkdir", "-p", "fraud_simulation"])
         )
 
         print("\n" + "=" * 50)
