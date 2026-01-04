@@ -115,8 +115,6 @@ class BAMLClient:
             fill_rate=max_requests_per_minute / 60.0
         )
 
-        self._client = None
-        self._client = None
         self._initialized = False
 
         self._client = baml
@@ -262,27 +260,6 @@ class BAMLClient:
         except Exception as e:
             logger.error(f"Failed to write to log file: {e}")
 
-    def analyze_fraud_sync(self, event: LoginEvent) -> Optional[BAMLFraudAssessment]:
-        """
-        Synchronous wrapper for fraud analysis.
-
-        This is a convenience method for synchronous contexts.
-        Uses asyncio.run internally.
-
-        Args:
-            event: LoginEvent with authentication details and context
-
-        Returns:
-            BAMLFraudAssessment if successful, None if BAML unavailable or error occurs
-        """
-        if not self.is_available():
-            return None
-
-        try:
-            return asyncio.run(self.analyze_fraud(event))
-        except Exception as e:
-            logger.error(f"Error in synchronous BAML call: {e}", exc_info=True)
-            return None
 
 
 # Global BAML client instance
