@@ -18,8 +18,8 @@ This repository contains a full-stack authentication and fraud detection system 
 ```mermaid
 graph TD
     User((User))
-    subgraph "Frontend"
-        UI["Dev Portal UI"]
+    subgraph "Application to call Auth Platform API"
+        UI["UI/Application"]
     end
     subgraph "Backend Services"
         Auth["Auth Platform"]
