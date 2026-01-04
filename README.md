@@ -19,17 +19,17 @@ This repository contains a full-stack authentication and fraud detection system 
 graph TD
     User((User))
     subgraph "Frontend"
-        UI["Dev Portal UI\n(React)"]
+        UI["Dev Portal UI"]
     end
     subgraph "Backend Services"
-        Auth["Auth Platform\n(FastAPI)"]
+        Auth["Auth Platform"]
         subgraph "MCP Server"
             Logic[Fraud Logic]
-            Rules["Rules Engine\n(Python)"]
+            Rules["Rules Engine"]
         end
     end
     subgraph "AI Intelligence"
-        Agents["BAML Agents\n(LLM Analysis)"]
+        Agents["BAML Agents"]
     end
 
     User -->|Browser| UI
