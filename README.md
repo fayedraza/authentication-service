@@ -18,11 +18,11 @@ This repository contains a full-stack authentication and fraud detection system 
 ```mermaid
 graph TD
     User((User))
-    subgraph "Application to call Auth Platform API"
+    subgraph "Application to call API"
         UI["UI/Application"]
     end
     subgraph "Backend Services"
-        Auth["Auth Platform"]
+        Auth["Auth Platform API"]
         subgraph "MCP Server"
             Logic[Fraud Logic]
             Rules["Rules Engine"]
@@ -100,8 +100,7 @@ graph TD
         E2E --> Build[Docker Build Check]
     end
 
-    subgraph "Fraud Simulation (dagger-fraud-sim.yml)"
-
+    subgraph "Fraud Simulation"
         SimTrigger[Commit / Dispatch] --> Dagger[Dagger Pipeline]
         Dagger --> SimRun[Run Simulation]
         SimRun --> AIAnalysis[AI Agent Analysis]
