@@ -19,17 +19,17 @@ This repository contains a full-stack authentication and fraud detection system 
 graph TD
     User((User))
     subgraph "Frontend"
-        UI[Dev Portal UI\n(React)]
+        UI["Dev Portal UI\n(React)"]
     end
     subgraph "Backend Services"
-        Auth[Auth Platform\n(FastAPI)]
+        Auth["Auth Platform\n(FastAPI)"]
         subgraph "MCP Server"
             Logic[Fraud Logic]
-            Rules[Rules Engine\n(Python)]
+            Rules["Rules Engine\n(Python)"]
         end
     end
     subgraph "AI Intelligence"
-        Agents[BAML Agents\n(LLM Analysis)]
+        Agents["BAML Agents\n(LLM Analysis)"]
     end
 
     User -->|Browser| UI
@@ -101,7 +101,8 @@ graph TD
     end
 
     subgraph "Fraud Simulation (dagger-fraud-sim.yml)"
-        SimTrigger[Schedule / Dispatch] --> Dagger[Dagger Pipeline]
+
+        SimTrigger[Commit / Dispatch] --> Dagger[Dagger Pipeline]
         Dagger --> SimRun[Run Simulation]
         SimRun --> AIAnalysis[AI Agent Analysis]
         AIAnalysis --> PR[Create Report PR]

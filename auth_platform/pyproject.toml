@@ -20,7 +20,7 @@ sqlalchemy = "^2.0.0"
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 bcrypt = "4.3.0"
 pyjwt = "^2.8.0"
-testcontainers = "^4.13.2"
+
 pyotp = "^2.9.0"
 python-dotenv = "^1.0.0"
 baml-py = "^0.40.0"

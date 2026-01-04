@@ -10,7 +10,7 @@ We use **Docker Compose** for both local testing and CI/CD. This is the industry
 - ✅ Fast test execution (containers stay running)
 - ✅ Easy debugging (check logs with `docker logs`)
 - ✅ Works reliably on macOS, Linux, and Windows
-- ✅ No complex testcontainers configuration needed
+
 
 ## Local Testing
 

@@ -1,6 +1,6 @@
 # End-to-End Email Notification Test
 
-This test suite verifies the complete authentication and fraud detection pipeline using testcontainers.
+This test suite verifies the complete authentication and fraud detection pipeline.
 
 ## Overview
 
