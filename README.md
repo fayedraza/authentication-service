@@ -110,7 +110,7 @@ graph TD
 
 ## Tech Stack & Tools
 
-- **Backend**: Python 3.10+, FastAPI, SQLAlchemy, Poetry
+- **Backend**: Python 3.10+, FastAPI, SQLAlchemy, Poetry, FastMCP (to be added)
 - **Frontend**: React
 - **AI & ML**:
   - [BAML](https://www.boundaryml.com/) (Boundaryless AI Markup Language)

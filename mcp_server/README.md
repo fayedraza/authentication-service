@@ -1210,3 +1210,7 @@ See [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) for detailed testing 
 - [Auth Service Documentation](../auth_platform/README.md) - Auth Service integration
 - [Design Document](.kiro/specs/mcp-server-integration/design.md) - System architecture
 - [Requirements Document](.kiro/specs/mcp-server-integration/requirements.md) - Feature requirements
+
+## Future Development
+
+- Add [FastMCP](https://gofastmcp.com/integrations/fastapi) integration
