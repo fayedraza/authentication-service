@@ -139,6 +139,30 @@ Run the comprehensive test suite:
 ./run_all_tests.sh
 ```
 
+## MCP Debugging
+
+A dedicated debugging tool is provided to inspect the MCP server's database (`mcp.db`) and verify integration.
+
+### Quick Debugging
+Use the CLI debugger to inspect database stats and recent events:
+
+```bash
+# Verify connection and list tools
+python test_client.py
+```
+
+### Database Debugger Server
+The `mcp_debugger.py` script runs a standalone MCP server for database inspection:
+
+```bash
+# Run the debugger server manually
+python mcp_debugger.py
+```
+
+**Key Features:**
+- `get_database_stats`: View total events, alerts, and risk metrics.
+- `get_recent_events`: Fetch the latest authentication logs.
+
 ## Tooling & Security
 
 - **Pre-commit**: Configured for linting (Pylint) and secret scanning.
